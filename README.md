@@ -16,7 +16,7 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
 2. **Servidor Backend Express (`server.js`):**
    - Servidor HTTP configurado con middleware CORS para permitir consumo seguro de API.
    - Procesamiento de cargas JSON (`express.json()`) y codificación de formularios (`urlencoded`).
-   - Enrutadores modulares montados en los prefijos `/api/clientes` y `/api/servicios`.
+   - Enrutadores modulares montados en los prefijos `/api/clientes`, `/api/servicios` y `/api/cotizaciones`.
    - Manejador de rutas no encontradas (404) y verificación de estado en ruta raíz `/`.
 
 3. **Base de Datos Relacional MySQL (`recepciones_mishell`):**
@@ -26,8 +26,8 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
      - `usuarios`: Gestión de personal y administradores (contraseñas hasheadas con bcrypt).
      - `clientes`: Datos de contacto y tributarios de clientes (soporte de Cédula/RUC Ecuador).
      - `servicios`: Catálogo parametrizable de servicios de eventos y catering con validación de código único.
-     - `cotizaciones`: Presupuestos de eventos con cálculo de subtotal, IVA y total.
-     - `detalle_cotizacion`: Desglose de servicios asignados a cada cotización.
+     - `cotizaciones`: Presupuestos de eventos con cálculo de subtotal, IVA (15%) y total.
+     - `detalle_cotizacion`: Desglose de servicios asignados a cada cotización (relación N:M).
      - `reservas`: Eventos confirmados y seguimiento financiero (anticipo y saldo).
    - Semilla inicial con usuario administrador y catálogo base de servicios para pruebas inmediatas.
 
@@ -43,17 +43,24 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
    - Arquitectura desacoplada **MVC** (`src/routes/servicios.js` y `src/controllers/servicioController.js`).
    - **Requisito No Funcional RNF04 (Seguridad):** Consultas preparadas y parametrizadas (`?`) en todas las operaciones.
    - Control de unicidad estricta para el código del servicio (`codigo`) en inserción y actualización (`HTTP 409 Conflict`).
-   - Soporte de filtrado por categoría (`CATERING`, `DECORACION`, `LOCAL_SALON`, `SONIDO_LUCES`, `FOTOGRAFIA_VIDEO`, `ANIMACION_DJ`, `OTROS`) y búsqueda por texto (`codigo`, `nombre_servicio`, `descripcion`).
-   - Validación de precios y capacidad máxima.
-   - **Baja lógica:** Marcado de descontinuado (`estado = 0`) para preservar los históricos en cotizaciones y reservas.
+   - Soporte de filtrado por categoría (`CATERING`, `DECORACION`, `LOCAL_SALON`, `SONIDO_LUCES`, `FOTOGRAFIA_VIDEO`, `ANIMACION_DJ`, `OTROS`) y búsqueda por texto.
+   - **Baja lógica:** Marcado de descontinuado (`estado = 0`).
    - Respuestas JSON estructuradas con formato unificado `{ ok: true/false, ... }`.
+
+6. **Módulo de Cotizaciones y Detalle (REST API Operativo):**
+   - Arquitectura desacoplada **MVC** (`src/routes/cotizaciones.js` y `src/controllers/cotizacionController.js`).
+   - **Transaccionalidad ACID:** Inserción atómica de cabecera (`cotizaciones`) y desglose (`detalle_cotizacion`) mediante `connection.beginTransaction()`, `commit()` y `rollback()`.
+   - **Cálculo Financiero Automatizado:** Subtotal acumulado de servicios, cálculo oficial de IVA al 15% (Ecuador SRI) y Total general.
+   - **Código Correlativo Único Diario:** Formato formal `COT-YYYYMMDD-XXX` generado bajo bloqueo transaccional (`FOR UPDATE`) para evitar colisiones concurrentes.
+   - **Gestión de Ciclo de Vida:** Endpoint dedicado para actualización de estados (`PENDIENTE`, `APROBADA`, `RECHAZADA`, `VENCIDA`).
+   - Consulta completa de presupuesto incluyendo los datos de cliente, organizador y desglose de servicios.
 
 ---
 
 ## 🛠️ Tecnologías del Backend
 * **Entorno de Ejecución:** Node.js (v18+)
 * **Framework Web:** Express.js
-* **Acceso a Datos:** MySQL2 (Soporte nativo de Promises y Prepared Statements)
+* **Acceso a Datos:** MySQL2 (Soporte nativo de Promises, Transacciones ACID y Prepared Statements)
 * **Base de Datos:** MySQL / MariaDB (vía XAMPP)
 * **Seguridad:** Cifrado Bcrypt para credenciales y consultas parametrizadas contra Inyección SQL (RNF04)
 
@@ -72,10 +79,12 @@ Sistema_Recepciones_Mishell/
 │   │   └── db.js                  # Pool de conexión a MySQL2 con soporte Promise
 │   ├── controllers/
 │   │   ├── clienteController.js   # Lógica CRUD, validaciones y seguridad de Clientes
-│   │   └── servicioController.js  # Lógica CRUD, código único y seguridad de Servicios
+│   │   ├── servicioController.js  # Lógica CRUD, código único y seguridad de Servicios
+│   │   └── cotizacionController.js# Lógica transaccional, cálculos IVA 15% y correlativos de Cotizaciones
 │   └── routes/
 │       ├── clientes.js            # Enrutador RESTful para Clientes
-│       └── servicios.js           # Enrutador RESTful para Servicios
+│       ├── servicios.js           # Enrutador RESTful para Servicios
+│       └── cotizaciones.js        # Enrutador RESTful para Cotizaciones
 │
 ├── .env                           # Variables de entorno locales
 ├── .env.example                   # Plantilla de configuración de variables de entorno
@@ -98,20 +107,6 @@ Sistema_Recepciones_Mishell/
 | **PUT** | `/api/clientes/:id` | Actualiza datos de un cliente | Parámetro URL `id` + JSON Body | `200`, `400`, `404`, `409`, `500` |
 | **DELETE** | `/api/clientes/:id` | Realiza baja lógica (`estado = 0`) | Parámetro URL: `id` | `200`, `400`, `404`, `500` |
 
-#### Ejemplo de Body para Clientes (POST / PUT):
-```json
-{
-  "tipo_documento": "CEDULA",
-  "identificacion": "1723456789",
-  "nombres": "María Belén",
-  "apellidos": "Salazar Torres",
-  "correo": "maria.salazar@ejemplo.com",
-  "telefono": "0998765432",
-  "direccion": "Sector La Carolina",
-  "ciudad": "Quito"
-}
-```
-
 ---
 
 ### 2. Módulo de Servicios (`/api/servicios`)
@@ -124,52 +119,104 @@ Sistema_Recepciones_Mishell/
 | **PUT** | `/api/servicios/:id` | Actualiza datos del servicio | Parámetro URL `id` + JSON Body | `200`, `400`, `404`, `409`, `500` |
 | **DELETE** | `/api/servicios/:id` | Realiza baja lógica (`estado = 0`) | Parámetro URL: `id` | `200`, `400`, `404`, `500` |
 
-#### Categorías Disponibles:
-- `CATERING`
-- `DECORACION`
-- `LOCAL_SALON`
-- `SONIDO_LUCES`
-- `FOTOGRAFIA_VIDEO`
-- `ANIMACION_DJ`
-- `OTROS`
+---
 
-#### Ejemplo de Body para Servicios (POST / PUT):
+### 3. Módulo de Cotizaciones (`/api/cotizaciones`)
+
+| Método | Endpoint | Descripción | Parámetros / Body | Códigos HTTP |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/api/cotizaciones` | Lista cotizaciones con datos del cliente | Query opcional: `?estado=APROBADA&buscar=texto` | `200`, `500` |
+| **GET** | `/api/cotizaciones/:id` | Consulta cotización completa con su detalle | Parámetro URL: `id` | `200`, `400`, `404`, `500` |
+| **POST** | `/api/cotizaciones` | Registra cotización y desglose en transacción | JSON Body (ver detalle abajo) | `201`, `400`, `404`, `500` |
+| **PATCH / PUT**| `/api/cotizaciones/:id/estado` | Actualiza el estado de la cotización | Parámetro URL `id` + `{"estado": "APROBADA"}` | `200`, `400`, `404`, `500` |
+
+#### Ejemplo de Body para Crear Cotización (POST `/api/cotizaciones`):
 ```json
 {
-  "codigo": "CAT-002",
-  "nombre_servicio": "Banquete Premium 4 Tiempos",
-  "descripcion": "Incluye entrada de mariscos, plato fuerte gourmet, copa de vino y postre artesanal.",
-  "categoria": "CATERING",
-  "precio_unitario": 19.50,
-  "capacidad_max": null
+  "id_cliente": 1,
+  "id_usuario": 1,
+  "tipo_evento": "Boda Elegance",
+  "fecha_evento": "2026-12-15",
+  "num_invitados": 120,
+  "lugar_evento": "Salón Mishell - Quito",
+  "observaciones": "Mantelería dorada y degustación previa",
+  "servicios": [
+    {
+      "id_servicio": 1,
+      "cantidad": 1,
+      "precio_unitario": 550.00,
+      "observaciones": "Salón climatizado 8 horas"
+    },
+    {
+      "id_servicio": 2,
+      "cantidad": 120,
+      "precio_unitario": 14.50,
+      "observaciones": "Plato fuerte: Lomo fino y pollo a la naranja"
+    },
+    {
+      "id_servicio": 3,
+      "cantidad": 1,
+      "precio_unitario": 380.00
+    }
+  ]
 }
 ```
 
-#### Respuestas JSON Estándar:
-- **Operación Exitosa (Registro/Actualización):**
-  ```json
-  {
-    "ok": true,
-    "mensaje": "Servicio registrado exitosamente en el catálogo de Recepciones Mishell",
-    "id_servicio": 5,
-    "servicio": {
-      "id_servicio": 5,
-      "codigo": "CAT-002",
-      "nombre_servicio": "Banquete Premium 4 Tiempos",
-      "categoria": "CATERING",
-      "precio_unitario": 19.5,
-      "capacidad_max": null,
-      "estado": 1
-    }
+#### Respuesta JSON al Crear Cotización (`HTTP 201 Created`):
+```json
+{
+  "ok": true,
+  "mensaje": "Cotización registrada exitosamente con su desglose de servicios",
+  "cotizacion": {
+    "id_cotizacion": 1,
+    "codigo_cotizacion": "COT-20261106-001",
+    "id_cliente": 1,
+    "cliente": "Carlos Andrés Mendoza Pérez",
+    "tipo_evento": "Boda Elegance",
+    "fecha_evento": "2026-12-15",
+    "num_invitados": 120,
+    "lugar_evento": "Salón Mishell - Quito",
+    "subtotal": 2670.00,
+    "iva": 400.50,
+    "total": 3070.50,
+    "estado": "PENDIENTE",
+    "items_registrados": 3,
+    "detalle": [
+      {
+        "id_servicio": 1,
+        "nombre_servicio": "Alquiler Salón Principal Mishell",
+        "cantidad": 1,
+        "precio_unitario": 550,
+        "subtotal": 550,
+        "observaciones": "Salón climatizado 8 horas"
+      },
+      {
+        "id_servicio": 2,
+        "nombre_servicio": "Banquete Clásico 3 Tiempos (por persona)",
+        "cantidad": 120,
+        "precio_unitario": 14.5,
+        "subtotal": 1740,
+        "observaciones": "Plato fuerte: Lomo fino y pollo a la naranja"
+      },
+      {
+        "id_servicio": 3,
+        "nombre_servicio": "Decoración Elegance Completa",
+        "cantidad": 1,
+        "precio_unitario": 380,
+        "subtotal": 380,
+        "observaciones": null
+      }
+    ]
   }
-  ```
-- **Error por Código Duplicado (HTTP 409):**
-  ```json
-  {
-    "ok": false,
-    "mensaje": "Ya existe un servicio registrado con el código \"CAT-002\". Por favor, elija otro código único."
-  }
-  ```
+}
+```
+
+#### Ejemplo de Body para Cambiar Estado (PATCH `/api/cotizaciones/:id/estado`):
+```json
+{
+  "estado": "APROBADA"
+}
+```
 
 ---
 
@@ -208,6 +255,7 @@ Sistema_Recepciones_Mishell/
      ```
 
 5. **Prueba de Conectividad:**
-   - Abre tu navegador o cliente REST en `http://localhost:3000/`.
-   - Módulo de Clientes: `http://localhost:3000/api/clientes`
-   - Módulo de Servicios: `http://localhost:3000/api/servicios`
+   - Raíz API: `http://localhost:3000/`
+   - Clientes: `http://localhost:3000/api/clientes`
+   - Servicios: `http://localhost:3000/api/servicios`
+   - Cotizaciones: `http://localhost:3000/api/cotizaciones`

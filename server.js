@@ -32,6 +32,7 @@ app.get('/', (req, res) => {
 // Importar rutas de módulos
 app.use('/api/clientes', require('./src/routes/clientes'));
 app.use('/api/servicios', require('./src/routes/servicios'));
+app.use('/api/cotizaciones', require('./src/routes/cotizaciones'));
 
 // Manejo de rutas no encontradas (404)
 app.use((req, res) => {
@@ -46,4 +47,5 @@ app.listen(PORT, () => {
     console.log(`🚀 Servidor ejecutándose en: http://localhost:${PORT}`);
     console.log(`📌 Módulo de Clientes disponible en: http://localhost:${PORT}/api/clientes`);
     console.log(`📌 Módulo de Servicios disponible en: http://localhost:${PORT}/api/servicios`);
+    console.log(`📌 Módulo de Cotizaciones disponible en: http://localhost:${PORT}/api/cotizaciones`);
 });
