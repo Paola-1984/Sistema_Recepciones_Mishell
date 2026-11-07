@@ -16,7 +16,7 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
 2. **Servidor Backend Express (`server.js`):**
    - Servidor HTTP configurado con middleware CORS para permitir consumo seguro de API.
    - Procesamiento de cargas JSON (`express.json()`) y codificación de formularios (`urlencoded`).
-   - Enrutadores modulares montados en los prefijos `/api/clientes`, `/api/servicios` y `/api/cotizaciones`.
+   - Enrutadores modulares montados en los prefijos `/api/clientes`, `/api/servicios`, `/api/cotizaciones` y `/api/reservas`.
    - Manejador de rutas no encontradas (404) y verificación de estado en ruta raíz `/`.
 
 3. **Base de Datos Relacional MySQL (`recepciones_mishell`):**
@@ -28,7 +28,7 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
      - `servicios`: Catálogo parametrizable de servicios de eventos y catering con validación de código único.
      - `cotizaciones`: Presupuestos de eventos con cálculo de subtotal, IVA (15%) y total.
      - `detalle_cotizacion`: Desglose de servicios asignados a cada cotización (relación N:M).
-     - `reservas`: Eventos confirmados y seguimiento financiero (anticipo y saldo).
+     - `reservas`: Eventos formalizados a partir de cotizaciones aprobadas, seguimiento de anticipos y saldos.
    - Semilla inicial con usuario administrador y catálogo base de servicios para pruebas inmediatas.
 
 4. **Módulo de Clientes (REST API Operativo):**
@@ -55,6 +55,14 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
    - **Gestión de Ciclo de Vida:** Endpoint dedicado para actualización de estados (`PENDIENTE`, `APROBADA`, `RECHAZADA`, `VENCIDA`).
    - Consulta completa de presupuesto incluyendo los datos de cliente, organizador y desglose de servicios.
 
+7. **Módulo de Reservas (REST API Operativo):**
+   - Arquitectura desacoplada **MVC** (`src/routes/reservas.js` y `src/controllers/reservaController.js`).
+   - **Formalización Atómica (Transacción SQL):** Creación de reservas exclusivamente a partir de cotizaciones en estado `APROBADA`, evitando reservas duplicadas para la misma cotización (relación 1:1).
+   - **Control Financiero:** Validación de anticipo entregado (`monto_anticipo > 0` y `<= total_evento`) y cálculo automático del saldo pendiente (`saldo_pendiente = total_evento - monto_anticipo`). Si el saldo es 0, el estado pasa a `PAGADA_TOTAL`.
+   - **Código Correlativo Único Diario:** Formato formal `RES-YYYYMMDD-XXX` con bloqueo `FOR UPDATE`.
+   - **Ciclo de Vida del Evento:** Endpoint para actualización de estados (`CONFIRMADA`, `EN_PROCESO` / `EN_EJECUCION`, `COMPLETADA` / `FINALIZADA`, `PAGADA_TOTAL`, `CANCELADA`).
+   - Consulta detallada con cliente, cotización vinculada y lista de servicios contratados.
+
 ---
 
 ## 🛠️ Tecnologías del Backend
@@ -80,11 +88,13 @@ Sistema_Recepciones_Mishell/
 │   ├── controllers/
 │   │   ├── clienteController.js   # Lógica CRUD, validaciones y seguridad de Clientes
 │   │   ├── servicioController.js  # Lógica CRUD, código único y seguridad de Servicios
-│   │   └── cotizacionController.js# Lógica transaccional, cálculos IVA 15% y correlativos de Cotizaciones
+│   │   ├── cotizacionController.js# Lógica transaccional, cálculos IVA 15% y correlativos de Cotizaciones
+│   │   └── reservaController.js   # Lógica transaccional, validación de anticipos y estados de Reservas
 │   └── routes/
 │       ├── clientes.js            # Enrutador RESTful para Clientes
-│       ├── servicios.js           # Enrutador RESTful para Servicios
-│       └── cotizaciones.js        # Enrutador RESTful para Cotizaciones
+│       └── servicios.js           # Enrutador RESTful para Servicios
+│       ├── cotizaciones.js        # Enrutador RESTful para Cotizaciones
+│       └── reservas.js            # Enrutador RESTful para Reservas
 │
 ├── .env                           # Variables de entorno locales
 ├── .env.example                   # Plantilla de configuración de variables de entorno
@@ -127,96 +137,64 @@ Sistema_Recepciones_Mishell/
 | :--- | :--- | :--- | :--- | :--- |
 | **GET** | `/api/cotizaciones` | Lista cotizaciones con datos del cliente | Query opcional: `?estado=APROBADA&buscar=texto` | `200`, `500` |
 | **GET** | `/api/cotizaciones/:id` | Consulta cotización completa con su detalle | Parámetro URL: `id` | `200`, `400`, `404`, `500` |
-| **POST** | `/api/cotizaciones` | Registra cotización y desglose en transacción | JSON Body (ver detalle abajo) | `201`, `400`, `404`, `500` |
+| **POST** | `/api/cotizaciones` | Registra cotización y desglose en transacción | JSON Body (cliente, evento, servicios) | `201`, `400`, `404`, `500` |
 | **PATCH / PUT**| `/api/cotizaciones/:id/estado` | Actualiza el estado de la cotización | Parámetro URL `id` + `{"estado": "APROBADA"}` | `200`, `400`, `404`, `500` |
 
-#### Ejemplo de Body para Crear Cotización (POST `/api/cotizaciones`):
+---
+
+### 4. Módulo de Reservas (`/api/reservas`)
+
+| Método | Endpoint | Descripción | Parámetros / Body | Códigos HTTP |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/api/reservas` | Lista todas las reservas con cliente y cotización | Query opcional: `?estado=CONFIRMADA&fecha=YYYY-MM-DD&buscar=texto` | `200`, `500` |
+| **GET** | `/api/reservas/:id` | Consulta los detalles de una reserva específica | Parámetro URL: `id` (incluye servicios contratados) | `200`, `400`, `404`, `500` |
+| **POST** | `/api/reservas` | Registra una reserva a partir de cotización aprobada | JSON Body (ver detalle abajo) | `201`, `400`, `404`, `409`, `500` |
+| **PATCH / PUT**| `/api/reservas/:id/estado` | Cambia el estado del evento | Parámetro URL `id` + `{"estado": "EN_PROCESO"}` | `200`, `400`, `404`, `500` |
+
+#### Ejemplo de Body para Crear Reserva (POST `/api/reservas`):
 ```json
 {
-  "id_cliente": 1,
+  "id_cotizacion": 1,
   "id_usuario": 1,
-  "tipo_evento": "Boda Elegance",
+  "hora_inicio": "17:00:00",
+  "hora_fin": "02:00:00",
+  "monto_anticipo": 1000.00,
+  "lugar_evento": "Salón de Eventos Mishell - Quito",
   "fecha_evento": "2026-12-15",
-  "num_invitados": 120,
-  "lugar_evento": "Salón Mishell - Quito",
-  "observaciones": "Mantelería dorada y degustación previa",
-  "servicios": [
-    {
-      "id_servicio": 1,
-      "cantidad": 1,
-      "precio_unitario": 550.00,
-      "observaciones": "Salón climatizado 8 horas"
-    },
-    {
-      "id_servicio": 2,
-      "cantidad": 120,
-      "precio_unitario": 14.50,
-      "observaciones": "Plato fuerte: Lomo fino y pollo a la naranja"
-    },
-    {
-      "id_servicio": 3,
-      "cantidad": 1,
-      "precio_unitario": 380.00
-    }
-  ]
+  "observaciones": "Anticipo cancelado mediante transferencia Banco Pichincha"
 }
 ```
 
-#### Respuesta JSON al Crear Cotización (`HTTP 201 Created`):
+#### Respuesta JSON al Crear Reserva (`HTTP 201 Created`):
 ```json
 {
   "ok": true,
-  "mensaje": "Cotización registrada exitosamente con su desglose de servicios",
-  "cotizacion": {
+  "mensaje": "Reserva formalizada exitosamente a partir de la cotización aprobada",
+  "reserva": {
+    "id_reserva": 1,
+    "codigo_reserva": "RES-20261106-001",
     "id_cotizacion": 1,
     "codigo_cotizacion": "COT-20261106-001",
     "id_cliente": 1,
-    "cliente": "Carlos Andrés Mendoza Pérez",
-    "tipo_evento": "Boda Elegance",
     "fecha_evento": "2026-12-15",
-    "num_invitados": 120,
-    "lugar_evento": "Salón Mishell - Quito",
-    "subtotal": 2670.00,
-    "iva": 400.50,
-    "total": 3070.50,
-    "estado": "PENDIENTE",
-    "items_registrados": 3,
-    "detalle": [
-      {
-        "id_servicio": 1,
-        "nombre_servicio": "Alquiler Salón Principal Mishell",
-        "cantidad": 1,
-        "precio_unitario": 550,
-        "subtotal": 550,
-        "observaciones": "Salón climatizado 8 horas"
-      },
-      {
-        "id_servicio": 2,
-        "nombre_servicio": "Banquete Clásico 3 Tiempos (por persona)",
-        "cantidad": 120,
-        "precio_unitario": 14.5,
-        "subtotal": 1740,
-        "observaciones": "Plato fuerte: Lomo fino y pollo a la naranja"
-      },
-      {
-        "id_servicio": 3,
-        "nombre_servicio": "Decoración Elegance Completa",
-        "cantidad": 1,
-        "precio_unitario": 380,
-        "subtotal": 380,
-        "observaciones": null
-      }
-    ]
+    "hora_inicio": "17:00:00",
+    "hora_fin": "02:00:00",
+    "lugar_evento": "Salón de Eventos Mishell - Quito",
+    "total_evento": 3070.50,
+    "monto_anticipo": 1000.00,
+    "saldo_pendiente": 2070.50,
+    "estado": "CONFIRMADA"
   }
 }
 ```
 
-#### Ejemplo de Body para Cambiar Estado (PATCH `/api/cotizaciones/:id/estado`):
+#### Ejemplo de Body para Cambiar Estado de Reserva (PATCH `/api/reservas/:id/estado`):
 ```json
 {
-  "estado": "APROBADA"
+  "estado": "EN_PROCESO"
 }
 ```
+*(Valores aceptados: `CONFIRMADA`, `EN_PROCESO` o `EN_EJECUCION`, `COMPLETADA` o `FINALIZADA`, `PAGADA_TOTAL`, `CANCELADA`)*
 
 ---
 
@@ -259,3 +237,4 @@ Sistema_Recepciones_Mishell/
    - Clientes: `http://localhost:3000/api/clientes`
    - Servicios: `http://localhost:3000/api/servicios`
    - Cotizaciones: `http://localhost:3000/api/cotizaciones`
+   - Reservas: `http://localhost:3000/api/reservas`
