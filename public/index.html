@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recepciones Mishell • Plataforma de Gestión Administrativa (Quito 2026)</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Estilos de la Aplicación -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- =====================================================================
+         NOTIFICACIONES TOAST FLOTANTES
+         ===================================================================== -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- =====================================================================
+         VISTA 1: PANTALLA DE LOGIN / SELECCIÓN DE PERFILES
+         ===================================================================== -->
+    <section id="view-login" class="view-login-screen">
+        <div class="login-wrapper">
+            <!-- Encabezado Institucional -->
+            <header class="login-header">
+                <div class="brand-badge">
+                    <span class="badge-icon">🏛️</span>
+                    <span>Centro de Eventos & Banquetes VIP</span>
+                </div>
+                <h1 class="brand-title">Recepciones Mishell</h1>
+                <p class="brand-subtitle">Plataforma de Gestión Administrativa • Quito 2026</p>
+            </header>
+
+            <!-- Tarjeta Principal de Login -->
+            <div class="login-card">
+                <!-- Selector de Pestañas de Perfil -->
+                <div class="profile-tabs" role="tablist">
+                    <button type="button" class="tab-btn active" id="tab-admin" data-role="ADMIN" role="tab" aria-selected="true">
+                        <span class="tab-icon">💼</span> Administrador
+                    </button>
+                    <button type="button" class="tab-btn" id="tab-owner" data-role="DUEÑO" role="tab" aria-selected="false">
+                        <span class="tab-icon">👑</span> Dueño del local
+                    </button>
+                </div>
+
+                <!-- Formulario de Acceso -->
+                <form id="form-login" class="login-form" novalidate>
+                    <div class="form-group">
+                        <label for="login-email">Correo Electrónico Institucional</label>
+                        <div class="input-icon-wrapper">
+                            <span class="input-icon">✉️</span>
+                            <input type="email" id="login-email" class="form-control" placeholder="admin@recepcionesmishell.com" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Contraseña de Seguridad</label>
+                        <div class="input-icon-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="login-password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                            <button type="button" id="btn-toggle-password" class="btn-toggle-eye" title="Mostrar/Ocultar contraseña" aria-label="Mostrar contraseña">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botón Principal Tono Durazno/Pastel (#FFA76E) -->
+                    <button type="submit" id="btn-submit-login" class="btn btn-peach btn-block btn-lg">
+                        <span>Iniciar Sesión en Recepciones Mishell</span>
+                        <span class="btn-arrow">➔</span>
+                    </button>
+
+                    <!-- Acceso Rápido de Demostración -->
+                    <div class="demo-access-box">
+                        <p class="demo-hint">¿Estás en la presentación o prueba de titulación?</p>
+                        <button type="button" id="btn-quick-demo" class="btn btn-outline-navy btn-sm btn-block">
+                            ⚡ Autocompletar Credenciales de Demo (Admin Quito)
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer Institucional de Seguridad -->
+            <footer class="login-footer">
+                <div class="security-indicators">
+                    <span class="sec-badge">🔒 Cifrado SSL 256-bit</span>
+                    <span class="sec-dot">•</span>
+                    <span class="sec-badge">⚡ Servidor Local Quito (Node.js XAMPP)</span>
+                    <span class="sec-dot">•</span>
+                    <span class="sec-badge">v2.6.0</span>
+                </div>
+                <p class="legal-copy">© 2026 Salón de Eventos y Banquetes Recepciones Mishell. Todos los derechos reservados.</p>
+            </footer>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         ESTRUCTURA PRINCIPAL DEL SISTEMA (POST-AUTENTICACIÓN)
+         ===================================================================== -->
+    <div id="app-shell" class="app-shell hidden">
+
+        <!-- Barra Superior de Navegación Global -->
+        <header class="app-navbar">
+            <div class="navbar-container">
+                <div class="navbar-brand">
+                    <span class="navbar-logo">✨</span>
+                    <div>
+                        <h2 class="navbar-title">Recepciones Mishell</h2>
+                        <span class="navbar-tag">Quito • Salón Principal</span>
+                    </div>
+                </div>
+
+                <!-- Menú de Navegación de Vistas -->
+                <nav class="navbar-nav" role="tablist">
+                    <button type="button" class="nav-item active" data-target="view-calendario" id="nav-btn-calendario">
+                        <span class="nav-icon">📅</span> Calendario & Agenda
+                    </button>
+                    <button type="button" class="nav-item" data-target="view-kpis" id="nav-btn-kpis">
+                        <span class="nav-icon">📊</span> Gestión & KPIs
+                    </button>
+                    <button type="button" class="nav-item nav-item-highlight" data-target="view-cotizador" id="nav-btn-cotizador">
+                        <span class="nav-icon">✍️</span> Cotizador Inteligente
+                    </button>
+                </nav>
+
+                <!-- Perfil de Usuario y Logout -->
+                <div class="navbar-user">
+                    <div class="user-chip">
+                        <div class="user-avatar" id="nav-user-avatar">AD</div>
+                        <div class="user-meta">
+                            <span class="user-name" id="nav-user-name">Administrador</span>
+                            <span class="user-role" id="nav-user-role">ADMIN</span>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-logout" class="btn-logout" title="Cerrar Sesión Segura">
+                        🚪 Salir
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor Dinámico de Vistas -->
+        <main class="app-main-content">
+
+            <!-- =================================================================
+                 VISTA 2: MÓDULO DE CALENDARIO Y AGENDA DIARIA
+                 ================================================================= -->
+            <section id="view-calendario" class="app-view active">
+                <div class="view-header-banner">
+                    <div class="venue-info">
+                        <div class="venue-tag">Salón Principal Exclusivo</div>
+                        <h2 class="view-title">Disponibilidad de Fechas y Agenda Diaria</h2>
+                        <p class="view-description">Capacidad máxima: <strong>hasta 250 personas</strong> • Climatización VIP, pista de baile y suite de honor.</p>
+                    </div>
+                    <div class="view-actions">
+                        <button type="button" class="btn btn-peach" id="btn-nuevo-evento-cal">
+                            <span>➕ Cotizar / Reservar Turno</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="calendar-agenda-grid">
+                    <!-- Calendario Mensual Interactivo -->
+                    <div class="calendar-card">
+                        <div class="calendar-card-header">
+                            <div class="month-selector">
+                                <button type="button" class="btn-icon" id="cal-prev-month" title="Mes Anterior">◀</button>
+                                <h3 id="current-month-display">Noviembre 2026</h3>
+                                <button type="button" class="btn-icon" id="cal-next-month" title="Mes Siguiente">▶</button>
+                            </div>
+                            <div class="calendar-legend">
+                                <span class="legend-item"><span class="legend-dot dot-confirmed"></span> Confirmado</span>
+                                <span class="legend-item"><span class="legend-dot dot-pending"></span> En Proceso</span>
+                                <span class="legend-item"><span class="legend-dot dot-available"></span> Disponible</span>
+                            </div>
+                        </div>
+
+                        <!-- Grilla de Días -->
+                        <div class="calendar-grid">
+                            <div class="day-name">Lun</div>
+                            <div class="day-name">Mar</div>
+                            <div class="day-name">Mié</div>
+                            <div class="day-name">Jue</div>
+                            <div class="day-name">Vie</div>
+                            <div class="day-name">Sáb</div>
+                            <div class="day-name">Dom</div>
+                            <!-- Los días se renderizan dinámicamente con JavaScript -->
+                            <div id="calendar-days-container" class="calendar-days-wrapper"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Agenda Diaria -->
+                    <div class="agenda-card">
+                        <div class="agenda-header">
+                            <div>
+                                <span class="agenda-sub">Agenda del Día Seleccionado</span>
+                                <h3 class="agenda-date" id="agenda-selected-date">Sábado, 21 de Noviembre de 2026</h3>
+                            </div>
+                            <span class="badge-status-pill badge-primary">2 Turnos Programados</span>
+                        </div>
+
+                        <div class="agenda-shifts-list" id="agenda-shifts-container">
+                            <!-- Turno Matutino -->
+                            <div class="shift-card shift-matutino">
+                                <div class="shift-badge">☀️ Turno Matutino (09:00 - 16:00)</div>
+                                <h4 class="shift-title">Almuerzo de Grado y Confraternidad • Familia Paredes</h4>
+                                <div class="shift-details">
+                                    <span>👥 80 Invitados</span>
+                                    <span>💰 Anticipo: $400.00</span>
+                                    <span>⚖️ Saldo: $450.00</span>
+                                </div>
+                                <div class="shift-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-navy btn-view-booking" data-id="1">Ver Ficha de Reserva</button>
+                                    <span class="status-chip chip-confirmed">Confirmado</span>
+                                </div>
+                            </div>
+
+                            <!-- Turno Nocturno -->
+                            <div class="shift-card shift-nocturno highlighted">
+                                <div class="shift-badge">🌙 Turno Nocturno (18:00 - 02:00)</div>
+                                <h4 class="shift-title">Boda Gala Soñada • Carlos Mendoza & Diana Salazar</h4>
+                                <div class="shift-details">
+                                    <span>👥 150 Invitados</span>
+                                    <span>💰 Anticipo: $1,200.00</span>
+                                    <span>⚖️ Saldo: $1,870.50</span>
+                                </div>
+                                <div class="shift-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-navy btn-view-booking" data-id="2">Ver Ficha de Reserva</button>
+                                    <button type="button" class="btn btn-sm btn-peach btn-confirm-shift">Confirmar Turno</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botón Bloquear Nuevo Turno -->
+                        <div class="agenda-footer">
+                            <button type="button" id="btn-block-shift" class="btn btn-peach btn-block">
+                                🔒 Bloquear Nuevo Turno en esta Fecha
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================================
+                 VISTA 3: MÓDULO DE GESTIÓN & REPORTES (KPIS)
+                 ================================================================= -->
+            <section id="view-kpis" class="app-view">
+                <div class="view-header-banner">
+                    <div>
+                        <div class="venue-tag">Métricas de Rendimiento</div>
+                        <h2 class="view-title">Tablero de Gestión & Reportes Ejecutivos</h2>
+                        <p class="view-description">Control financiero en tiempo real, efectividad de ventas y proyección para el salón en Quito.</p>
+                    </div>
+                    <div class="date-period-badge">
+                        <span>📅 Periodo: Segundo Semestre 2026</span>
+                    </div>
+                </div>
+
+                <!-- Tarjetas KPI -->
+                <div class="kpi-cards-grid">
+                    <!-- KPI 1 -->
+                    <div class="kpi-card">
+                        <div class="kpi-icon-box icon-navy">💵</div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Facturación Acumulada</span>
+                            <h3 class="kpi-value">$14,850.00</h3>
+                            <span class="kpi-growth positive">▲ +18.4% vs mes anterior</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2 -->
+                    <div class="kpi-card">
+                        <div class="kpi-icon-box icon-peach">🥂</div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Eventos Agendados</span>
+                            <h3 class="kpi-value">16 Eventos</h3>
+                            <div class="kpi-submetrics">
+                                <span><strong>11</strong> Confirmados</span> • <span><strong>5</strong> En Negociación</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3 -->
+                    <div class="kpi-card">
+                        <div class="kpi-icon-box icon-blue">🎯</div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Efectividad de Cotización</span>
+                            <h3 class="kpi-value">74%</h3>
+                            <div class="kpi-progress-bar">
+                                <div class="kpi-progress-fill" style="width: 74%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4 -->
+                    <div class="kpi-card">
+                        <div class="kpi-icon-box icon-green">🏦</div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Anticipos Recaudados</span>
+                            <h3 class="kpi-value">$6,200.00</h3>
+                            <span class="kpi-subtext">Saldos por cobrar: <strong>$8,650.00</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos y Distribución -->
+                <div class="reports-grid">
+                    <!-- Gráfica de Ingresos Semestrales -->
+                    <div class="chart-card">
+                        <div class="card-title-row">
+                            <h3>Ingresos Semestrales (Real vs Meta) • Quito 2026</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-bar bar-real"></span> Ingreso Real</span>
+                                <span class="legend-item"><span class="legend-bar bar-meta"></span> Meta Comercial</span>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico de Barras con CSS Puro -->
+                        <div class="bar-chart-container">
+                            <div class="chart-col">
+                                <div class="bars-pair">
+                                    <div class="bar-fill meta" style="height: 60%;" title="Meta: $9,000"></div>
+                                    <div class="bar-fill real" style="height: 68%;" title="Real: $10,200"></div>
+                                </div>
+                                <span class="col-label">Junio</span>
+                            </div>
+                            <div class="chart-col">
+                                <div class="bars-pair">
+                                    <div class="bar-fill meta" style="height: 70%;" title="Meta: $11,000"></div>
+                                    <div class="bar-fill real" style="height: 75%;" title="Real: $11,800"></div>
+                                </div>
+                                <span class="col-label">Julio</span>
+                            </div>
+                            <div class="chart-col">
+                                <div class="bars-pair">
+                                    <div class="bar-fill meta" style="height: 75%;" title="Meta: $12,000"></div>
+                                    <div class="bar-fill real" style="height: 82%;" title="Real: $13,100"></div>
+                                </div>
+                                <span class="col-label">Agosto</span>
+                            </div>
+                            <div class="chart-col">
+                                <div class="bars-pair">
+                                    <div class="bar-fill meta" style="height: 65%;" title="Meta: $10,500"></div>
+                                    <div class="bar-fill real" style="height: 72%;" title="Real: $11,600"></div>
+                                </div>
+                                <span class="col-label">Septiembre</span>
+                            </div>
+                            <div class="chart-col">
+                                <div class="bars-pair">
+                                    <div class="bar-fill meta" style="height: 80%;" title="Meta: $13,000"></div>
+                                    <div class="bar-fill real" style="height: 86%;" title="Real: $13,950"></div>
+                                </div>
+                                <span class="col-label">Octubre</span>
+                            </div>
+                            <div class="chart-col active-month">
+                                <div class="bars-pair">
+                                    <div class="bar-fill meta" style="height: 85%;" title="Meta: $14,000"></div>
+                                    <div class="bar-fill real peach" style="height: 92%;" title="Real: $14,850"></div>
+                                </div>
+                                <span class="col-label">Noviembre</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Distribución por Tipo de Evento -->
+                    <div class="distribution-card">
+                        <h3>Distribución de Eventos</h3>
+                        <p class="card-subtitle">Preferencia de contrataciones en la temporada actual</p>
+
+                        <div class="distribution-meters">
+                            <div class="dist-row">
+                                <div class="dist-header">
+                                    <span>💍 Bodas Soñadas</span>
+                                    <strong>45%</strong>
+                                </div>
+                                <div class="dist-meter-track">
+                                    <div class="dist-meter-fill fill-navy" style="width: 45%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="dist-row">
+                                <div class="dist-header">
+                                    <span>👑 Quinceañeras</span>
+                                    <strong>30%</strong>
+                                </div>
+                                <div class="dist-meter-track">
+                                    <div class="dist-meter-fill fill-peach" style="width: 30%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="dist-row">
+                                <div class="dist-header">
+                                    <span>🎓 Grados & Corporativos</span>
+                                    <strong>25%</strong>
+                                </div>
+                                <div class="dist-meter-track">
+                                    <div class="dist-meter-fill fill-blue" style="width: 25%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta Destacada de Oportunidad Estratégica -->
+                        <div class="opportunity-card">
+                            <div class="opp-badge">🎯 Oportunidad Estratégica</div>
+                            <h4>Temporada Alta de Fiestas de Quito & Cenas de Fin de Año</h4>
+                            <p>Se detecta un incremento de cotizaciones corporativas para Diciembre. Se recomienda ofrecer el paquete <strong>"Banquete 3 Tiempos + Disco Móvil 6h"</strong> con un anticipo preferencial del 30%.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================================
+                 VISTAS 4, 5, 6 y 7: COTIZADOR INTELIGENTE (4 PASOS)
+                 ================================================================= -->
+            <section id="view-cotizador" class="app-view">
+                
+                <!-- Barra de Progreso Superior de 4 Pasos -->
+                <div class="wizard-progress-card">
+                    <div class="wizard-steps-track">
+                        <div class="step-indicator active" id="step-node-1" data-step="1">
+                            <span class="step-num">1</span>
+                            <span class="step-text">Datos del Evento</span>
+                        </div>
+                        <div class="step-line" id="line-1-2"></div>
+                        <div class="step-indicator" id="step-node-2" data-step="2">
+                            <span class="step-num">2</span>
+                            <span class="step-text">Banquete & Bebidas</span>
+                        </div>
+                        <div class="step-line" id="line-2-3"></div>
+                        <div class="step-indicator" id="step-node-3" data-step="3">
+                            <span class="step-num">3</span>
+                            <span class="step-text">Servicios & Montaje</span>
+                        </div>
+                        <div class="step-line" id="line-3-4"></div>
+                        <div class="step-indicator" id="step-node-4" data-step="4">
+                            <span class="step-num">4</span>
+                            <span class="step-text">Resumen & Presupuesto</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="wizard-progress-fill" style="width: 25%;"></div>
+                    </div>
+                    <div class="progress-caption">
+                        <span id="wizard-step-label">Paso 1 de 4: Configuración Inicial de la Recepción</span>
+                        <strong id="wizard-percentage">25% completado</strong>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR DE PASOS DEL COTIZADOR -->
+                <div class="wizard-container">
+
+                    <!-- =========================================================
+                         PASO 1 (VISTA 4): DATOS DEL EVENTO
+                         ========================================================= -->
+                    <div id="wizard-step-1" class="wizard-step-panel active">
+                        <div class="step-box-header">
+                            <h3>Paso 1: Titular, Tipo de Evento y Aforo de Invitados</h3>
+                            <p>Ingresa los detalles básicos para personalizar el aforo y la distribución del salón.</p>
+                        </div>
+
+                        <!-- Titular de la Reserva (Integrado con /api/clientes) -->
+                        <div class="form-section-card">
+                            <div class="section-title-row">
+                                <h4>👤 Titular de la Reserva (Expediente de Cliente)</h4>
+                                <button type="button" class="btn btn-sm btn-outline-navy" id="btn-quick-new-client">+ Registrar Nuevo Cliente</button>
+                            </div>
+
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label for="cot-cliente-select">Seleccionar Cliente Existente (Quito):</label>
+                                    <select id="cot-cliente-select" class="form-control">
+                                        <option value="">Cargando clientes de la base de datos...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Detalles del Titular:</label>
+                                    <div class="client-preview-badge" id="client-preview-box">
+                                        <span>Selecciona un cliente para visualizar su cédula/RUC y teléfono.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tipo de Recepción -->
+                        <div class="form-section-card">
+                            <h4>🎉 Tipo de Recepción</h4>
+                            <div class="event-types-grid" id="event-types-selector">
+                                <div class="event-type-card selected" data-type="Boda Soñada">
+                                    <span class="type-icon">💍</span>
+                                    <h5>Boda Soñada</h5>
+                                    <p>Montaje nupcial de gala, suite de honor y backing floral.</p>
+                                </div>
+                                <div class="event-type-card" data-type="Quince Años">
+                                    <span class="type-icon">👑</span>
+                                    <h5>Quince Años</h5>
+                                    <p>Pista LED, vals iluminado y backing temático de bienvenida.</p>
+                                </div>
+                                <div class="event-type-card" data-type="Grado / Prom">
+                                    <span class="type-icon">🎓</span>
+                                    <h5>Grado / Prom</h5>
+                                    <p>Celebración de graduación con cena formal y ambiente disco.</p>
+                                </div>
+                                <div class="event-type-card" data-type="Corporativo">
+                                    <span class="type-icon">💼</span>
+                                    <h5>Corporativo</h5>
+                                    <p>Cenas empresariales, aniversarios y premiaciones anuales.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aforo de Invitados & Distribución de Mesas -->
+                        <div class="form-section-card">
+                            <h4>👥 Aforo de Invitados</h4>
+                            <div class="guests-control-wrapper">
+                                <div class="slider-row">
+                                    <input type="range" id="cot-guests-slider" min="30" max="250" value="85" step="5" class="custom-range-slider">
+                                    <div class="guests-counter-box">
+                                        <input type="number" id="cot-guests-number" min="30" max="250" value="85" class="guests-num-input">
+                                        <span class="guests-label">personas</span>
+                                    </div>
+                                </div>
+                                <!-- Sugerencia de Distribución de Mesas -->
+                                <div class="table-suggestion-box">
+                                    <span class="sugg-icon">🪑</span>
+                                    <div class="sugg-text">
+                                        <strong>Sugerencia de Distribución Óptima:</strong>
+                                        <p id="table-distribution-text">Para 85 personas: 8 mesas redondas de 10 comensales + 1 mesa imperial de honor (5 comensales).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fecha Prevista y Turno del Salón -->
+                        <div class="form-section-card">
+                            <h4>📅 Fecha y Turno Exclusivo</h4>
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label for="cot-fecha-evento">Fecha Prevista del Evento:</label>
+                                    <input type="date" id="cot-fecha-evento" class="form-control" value="2026-11-21">
+                                </div>
+                                <div class="form-group">
+                                    <label>Turno del Salón Principal:</label>
+                                    <div class="shift-radio-group">
+                                        <label class="shift-radio-card">
+                                            <input type="radio" name="cot-turno" value="MATUTINO">
+                                            <div class="radio-content">
+                                                <strong>☀️ Turno Matutino</strong>
+                                                <span>09:00 a 16:00 (7 horas)</span>
+                                            </div>
+                                        </label>
+                                        <label class="shift-radio-card selected">
+                                            <input type="radio" name="cot-turno" value="NOCTURNO" checked>
+                                            <div class="radio-content">
+                                                <strong>🌙 Turno Nocturno</strong>
+                                                <span>18:00 a 02:00 (8 horas)</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navegación del Paso 1 -->
+                        <div class="wizard-nav-row justify-end">
+                            <button type="button" class="btn btn-peach btn-lg btn-wizard-next" data-next="2">
+                                <span>Siguiente: Banquete y Bebidas</span>
+                                <span class="btn-arrow">➔</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         PASO 2 (VISTA 5): BANQUETE Y BEBIDAS
+                         ========================================================= -->
+                    <div id="wizard-step-2" class="wizard-step-panel">
+                        <div class="step-box-header">
+                            <h3>Paso 2: Banquete Gastronómico, Mantelería y Pastel</h3>
+                            <p>Personaliza la experiencia culinaria según los <strong id="step2-guests-display">85</strong> invitados configurados.</p>
+                        </div>
+
+                        <!-- Selector de Mantelería y Lazos -->
+                        <div class="form-section-card">
+                            <h4>🎀 Mantelería Fina y Lazos Temáticos</h4>
+                            <p class="section-subtext">Selecciona la paleta decorativa para las mesas redondas y sillas Tiffany:</p>
+                            <div class="palette-options-grid" id="palette-selector">
+                                <label class="palette-card selected">
+                                    <input type="radio" name="cot-manteleria" value="Blanco & Dorado Gala" checked>
+                                    <div class="palette-swatch swatch-gold"></div>
+                                    <span class="palette-name">Blanco & Dorado Gala</span>
+                                </label>
+                                <label class="palette-card">
+                                    <input type="radio" name="cot-manteleria" value="Rosa Pastel & Mandarina">
+                                    <div class="palette-swatch swatch-peach"></div>
+                                    <span class="palette-name">Rosa Pastel & Mandarina</span>
+                                </label>
+                                <label class="palette-card">
+                                    <input type="radio" name="cot-manteleria" value="Azul Noche & Plata">
+                                    <div class="palette-swatch swatch-navy"></div>
+                                    <span class="palette-name">Azul Noche & Plata</span>
+                                </label>
+                                <label class="palette-card">
+                                    <input type="radio" name="cot-manteleria" value="Verde Esmeralda Imperial">
+                                    <div class="palette-swatch swatch-emerald"></div>
+                                    <span class="palette-name">Verde Esmeralda Imperial</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Listado de Menús de Banquete -->
+                        <div class="form-section-card">
+                            <h4>🍽️ Menús de Banquete (Catering Profesional)</h4>
+                            <div class="menus-grid" id="banquet-menus-selector">
+                                <!-- Menú 1 -->
+                                <div class="menu-card selected" data-menu="Gourmet 3 Tiempos" data-price="14.50">
+                                    <div class="menu-badge">Más Cotizado</div>
+                                    <h5 class="menu-name">Banquete Clásico Gourmet 3 Tiempos</h5>
+                                    <p class="menu-desc">Entrada fina, plato fuerte (Lomo fino en salsa de champiñones o Pechuga cordon bleu con guarnición y ensalada fresca) y postre artesanal.</p>
+                                    <div class="menu-pricing">
+                                        <span class="price-unit">$14.50 <small>/ comensal</small></span>
+                                        <span class="price-total-calc" id="menu-calc-1">Subtotal comensales: $1,232.50</span>
+                                    </div>
+                                </div>
+
+                                <!-- Menú 2 -->
+                                <div class="menu-card" data-menu="Buffet Internacional" data-price="17.00">
+                                    <div class="menu-badge">Gama Alta</div>
+                                    <h5 class="menu-name">Buffet Internacional 4 Opciones</h5>
+                                    <p class="menu-desc">Estación de 2 carnes selectas, 2 guarniciones gourmet, barra de ensaladas mediterráneas y degustación de mini postres finos.</p>
+                                    <div class="menu-pricing">
+                                        <span class="price-unit">$17.00 <small>/ comensal</small></span>
+                                        <span class="price-total-calc" id="menu-calc-2">Subtotal comensales: $1,445.00</span>
+                                    </div>
+                                </div>
+
+                                <!-- Menú 3 -->
+                                <div class="menu-card" data-menu="Tradicional Ecuatoriano" data-price="12.50">
+                                    <div class="menu-badge">Tradición Quito</div>
+                                    <h5 class="menu-name">Menú Tradicional Fiesta Ecuatoriana</h5>
+                                    <p class="menu-desc">Entrada típica gourmet (Ceviche de palmito o mini empanadas de morocho), plato fuerte tradicional estilizado y dulce quiteño.</p>
+                                    <div class="menu-pricing">
+                                        <span class="price-unit">$12.50 <small>/ comensal</small></span>
+                                        <span class="price-total-calc" id="menu-calc-3">Subtotal comensales: $1,062.50</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pastel Temático Activable (Switch) -->
+                        <div class="form-section-card cake-addon-card">
+                            <div class="cake-addon-left">
+                                <span class="cake-icon">🎂</span>
+                                <div>
+                                    <h4>Pastel de Evento Temático (Fondant Fino)</h4>
+                                    <p>Elaborado a la medida del evento con cobertura en masa elástica fondant y diseño personalizado. Tarifa estándar: <strong>$2.50 por porción</strong>.</p>
+                                </div>
+                            </div>
+                            <div class="cake-addon-right">
+                                <label class="switch-control">
+                                    <input type="checkbox" id="switch-pastel" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <span class="cake-addon-price" id="pastel-calc-display">+$212.50 (85 pax)</span>
+                            </div>
+                        </div>
+
+                        <!-- Barra Inferior Flotante de Subtotal Acumulado en Tiempo Real -->
+                        <div class="sticky-subtotal-bar">
+                            <div class="subtotal-info">
+                                <span class="subtotal-label">Subtotal Acumulado (Paso 2):</span>
+                                <strong class="subtotal-amount" id="live-subtotal-step2">$1,445.00</strong>
+                                <span class="subtotal-note">Incluye banquete y pastel temático</span>
+                            </div>
+                            <div class="wizard-nav-btns">
+                                <button type="button" class="btn btn-outline-navy btn-wizard-prev" data-prev="1">◀ Anterior</button>
+                                <button type="button" class="btn btn-peach btn-wizard-next" data-next="3">Siguiente: Servicios Adicionales ➔</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         PASO 3 (VISTA 6): SERVICIOS ADICIONALES & MONTAJE
+                         ========================================================= -->
+                    <div id="wizard-step-3" class="wizard-step-panel">
+                        <div class="step-box-header">
+                            <h3>Paso 3: Disco Móvil, Iluminación y Alquiler Base del Salón</h3>
+                            <p>Configura el equipamiento técnico audiovisual y el mobiliario del evento.</p>
+                        </div>
+
+                        <!-- Mobiliario y Montaje del Salón -->
+                        <div class="form-section-card">
+                            <div class="card-title-row">
+                                <h4>🏛️ Alquiler Base del Salón Principal & Mobiliario</h4>
+                                <span class="badge-status-pill badge-primary">Tarifa Base Fija</span>
+                            </div>
+                            <div class="venue-rental-details">
+                                <div class="rental-price-col">
+                                    <span class="rental-price">$800.00</span>
+                                    <span class="rental-duration">8 horas de uso exclusivo</span>
+                                </div>
+                                <div class="rental-features-list">
+                                    <div class="feature-item">✓ Sillas Tiffany elegantes y mesas redondas</div>
+                                    <div class="feature-item">✓ Cristalería fina y vajilla completa de 3 tiempos</div>
+                                    <div class="feature-item">✓ Personal de servicio (Meseros uniformados y capitán de salón)</div>
+                                    <div class="feature-item">✓ Climatización integral y baños VIP</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Disco Móvil & Iluminación -->
+                        <div class="form-section-card">
+                            <h4>🎧 Paquete Disco Móvil Pro & Iluminación Robótica</h4>
+                            <p class="section-subtext">Selecciona la duración de la animación musical para tu evento:</p>
+                            
+                            <div class="dj-duration-grid" id="dj-duration-selector">
+                                <div class="dj-card" data-hours="4" data-price="200.00">
+                                    <h5>4 Horas</h5>
+                                    <span class="dj-price">$200.00</span>
+                                    <p>Ideal para recepciones matutinas o eventos ejecutivos.</p>
+                                </div>
+                                <div class="dj-card selected" data-hours="6" data-price="260.00">
+                                    <div class="dj-recommended-badge">Recomendado</div>
+                                    <h5>6 Horas</h5>
+                                    <span class="dj-price">$260.00</span>
+                                    <p>La duración perfecta para bodas y quinceañeras completas.</p>
+                                </div>
+                                <div class="dj-card" data-hours="8" data-price="360.00">
+                                    <h5>8 Horas</h5>
+                                    <span class="dj-price">$360.00</span>
+                                    <p>Cobertura total durante todo el turno nocturno ($50/h adicional).</p>
+                                </div>
+                            </div>
+
+                            <!-- Listado de Equipamiento Técnico Incluido -->
+                            <div class="dj-included-box">
+                                <h5>Equipamiento técnico incluido sin recargo en todos los paquetes:</h5>
+                                <div class="tech-tags-grid">
+                                    <span class="tech-tag">🎧 DJ Profesional en vivo con amplio repertorio</span>
+                                    <span class="tech-tag">💡 Cabezales robóticos LED inteligentes</span>
+                                    <span class="tech-tag">💨 Máquina de humo para el vals</span>
+                                    <span class="tech-tag">🎤 2 Micrófonos inalámbricos UHF de largo alcance</span>
+                                    <span class="tech-tag">🔊 Sistema de sonido line-array calibrado</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Desglose Acumulado -->
+                        <div class="form-section-card summary-panel-step3">
+                            <h4>📋 Desglose Acumulado del Presupuesto Parcial</h4>
+                            <div class="breakdown-lines">
+                                <div class="b-line">
+                                    <span>Alquiler Base del Salón (8h con Mobiliario & Meseros):</span>
+                                    <strong id="b-salon">$800.00</strong>
+                                </div>
+                                <div class="b-line">
+                                    <span>Banquete Gastronómico (<span id="b-guests">85</span> pax × <span id="b-menu-unit">$14.50</span>):</span>
+                                    <strong id="b-banquet">$1,232.50</strong>
+                                </div>
+                                <div class="b-line">
+                                    <span>Pastel de Evento Temático en Fondant:</span>
+                                    <strong id="b-cake">$212.50</strong>
+                                </div>
+                                <div class="b-line">
+                                    <span>Disco Móvil Pro & Luces Robóticas (<span id="b-dj-hours">6</span> horas):</span>
+                                    <strong id="b-dj">$260.00</strong>
+                                </div>
+                                <div class="b-line">
+                                    <span>Montaje Especial, Cristalería & Lazos:</span>
+                                    <strong id="b-setup">$380.00</strong>
+                                </div>
+                                <div class="b-line total-subtotal-line">
+                                    <span>SUBTOTAL ACUMULADO (Sin IVA):</span>
+                                    <span class="subtotal-highlight" id="b-subtotal-val">$2,885.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navegación del Paso 3 -->
+                        <div class="wizard-nav-row">
+                            <button type="button" class="btn btn-outline-navy btn-wizard-prev" data-prev="2">◀ Anterior</button>
+                            <button type="button" class="btn btn-peach btn-lg btn-wizard-next" data-next="4">
+                                <span>Ver Resumen & Presupuesto Final</span>
+                                <span class="btn-arrow">➔</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         PASO 4 (VISTA 7): RESUMEN Y PRESUPUESTO FISCAL (SRI)
+                         ========================================================= -->
+                    <div id="wizard-step-4" class="wizard-step-panel">
+                        <div class="step-box-header">
+                            <div class="quote-ref-badge" id="quote-ref-badge">Referencia: #COT-2026-160</div>
+                            <h3>Paso 4: Resumen de Contratación y Presupuesto Oficial</h3>
+                            <p>Verifica los datos del cliente, desglose de servicios y liquidación fiscal con la tarifa oficial del 15% de IVA del SRI.</p>
+                        </div>
+
+                        <!-- Tarjeta de Resumen del Cliente y Evento -->
+                        <div class="client-summary-card">
+                            <div class="summary-col">
+                                <span class="col-caption">Titular de la Cotización</span>
+                                <h4 id="resumen-cliente-nombre">Carlos Andrés Mendoza Pérez</h4>
+                                <p id="resumen-cliente-id">C.I. / RUC: <strong>1712345678</strong></p>
+                                <p id="resumen-cliente-contacto">📞 0987654321 • ✉️ carlos.mendoza@email.com</p>
+                            </div>
+                            <div class="summary-col">
+                                <span class="col-caption">Detalles de la Recepción</span>
+                                <h4 id="resumen-evento-tipo">Boda Soñada</h4>
+                                <p>Aforo: <strong id="resumen-evento-aforo">85 Invitados</strong></p>
+                                <p>Fecha: <strong id="resumen-evento-fecha">21 de Noviembre de 2026</strong></p>
+                                <p>Turno: <strong id="resumen-evento-turno">Turno Nocturno (18:00 - 02:00)</strong></p>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Desglose Detallado de Servicios -->
+                        <div class="table-responsive-card">
+                            <table class="quote-table">
+                                <thead>
+                                    <tr>
+                                        <th>Concepto / Servicio</th>
+                                        <th>Categoría</th>
+                                        <th class="text-center">Cant.</th>
+                                        <th class="text-right">Precio Unit.</th>
+                                        <th class="text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quote-table-body">
+                                    <tr>
+                                        <td><strong>Alquiler Salón Principal Mishell</strong><br><small>Uso exclusivo de 8 horas con climatización y suite de honor</small></td>
+                                        <td>LOCAL_SALON</td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-right">$800.00</td>
+                                        <td class="text-right font-bold">$800.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Banquete Clásico Gourmet 3 Tiempos</strong><br><small>Porción individual completa para comensales</small></td>
+                                        <td>CATERING</td>
+                                        <td class="text-center">85</td>
+                                        <td class="text-right">$14.50</td>
+                                        <td class="text-right font-bold">$1,232.50</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pastel Temático en Fondant</strong><br><small>Porciones individuales de repostería fina</small></td>
+                                        <td>CATERING</td>
+                                        <td class="text-center">85</td>
+                                        <td class="text-right">$2.50</td>
+                                        <td class="text-right font-bold">$212.50</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Disco Móvil Pro & Luces Robóticas (6h)</strong><br><small>DJ en vivo, cabezales LED y máquina de humo</small></td>
+                                        <td>SONIDO_LUCES</td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-right">$260.00</td>
+                                        <td class="text-right font-bold">$260.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Decoración Elegance, Sillas Tiffany & Lazos</strong><br><small>Montaje de mantelería Blanco & Dorado Gala y cristalería</small></td>
+                                        <td>DECORACION</td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-right">$380.00</td>
+                                        <td class="text-right font-bold">$380.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Bloque Fiscal SRI (15% de IVA) y Métricas de Pago -->
+                        <div class="fiscal-block-card">
+                            <div class="fiscal-left">
+                                <div class="sri-badge">
+                                    <span>🇪🇨 SRI Ecuador • Tarifa IVA 15%</span>
+                                </div>
+                                <p class="fiscal-terms">
+                                    Esta proforma tiene una validez de 15 días calendario. Para garantizar el bloqueo exclusivo de la fecha en el calendario, se requiere un abono de anticipo mínimo del 30% al momento de la firma del contrato.
+                                </p>
+                            </div>
+                            <div class="fiscal-right">
+                                <div class="calc-row">
+                                    <span>SUBTOTAL NETO:</span>
+                                    <strong id="final-subtotal">$2,885.00</strong>
+                                </div>
+                                <div class="calc-row">
+                                    <span>IVA SRI (15%):</span>
+                                    <strong id="final-iva" class="text-orange">$432.75</strong>
+                                </div>
+                                <div class="calc-row total-highlight-row">
+                                    <span>TOTAL DEFINITIVO:</span>
+                                    <span class="total-big-number" id="final-total">$3,317.75</span>
+                                </div>
+                                <div class="advance-suggested-box">
+                                    <span>Anticipo sugerido para bloqueo (aprox. 30%):</span>
+                                    <strong id="suggested-advance">$1,000.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción Final del Cotizador -->
+                        <div class="final-actions-card">
+                            <button type="button" class="btn btn-outline-navy btn-wizard-prev" data-prev="3">
+                                ◀ Modificar Servicios
+                            </button>
+                            <div class="final-actions-right">
+                                <button type="button" id="btn-save-quote-only" class="btn btn-outline-navy btn-lg">
+                                    💾 Guardar Solo Información
+                                </button>
+                                <button type="button" id="btn-confirm-and-book" class="btn btn-peach btn-lg">
+                                    <span>📅 Confirmar y Reservar Fecha</span>
+                                    <span class="btn-arrow">✓</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =====================================================================
+         MODAL: REGISTRAR NUEVO CLIENTE (QUICK MODAL)
+         ===================================================================== -->
+    <div id="modal-nuevo-cliente" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Registrar Nuevo Cliente</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-client-modal">✖</button>
+            </div>
+            <form id="form-nuevo-cliente" class="modal-body">
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="new-client-tipo">Tipo de Documento:</label>
+                        <select id="new-client-tipo" class="form-control">
+                            <option value="CEDULA">Cédula de Identidad (10 dígitos)</option>
+                            <option value="RUC">RUC (13 dígitos)</option>
+                            <option value="PASAPORTE">Pasaporte</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-id">Número de Identificación:</label>
+                        <input type="text" id="new-client-id" class="form-control" placeholder="1712345678" required>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="new-client-nombres">Nombres:</label>
+                        <input type="text" id="new-client-nombres" class="form-control" placeholder="Carlos Andrés" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-apellidos">Apellidos:</label>
+                        <input type="text" id="new-client-apellidos" class="form-control" placeholder="Mendoza Pérez" required>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="new-client-correo">Correo Electrónico:</label>
+                        <input type="email" id="new-client-correo" class="form-control" placeholder="carlos.mendoza@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-client-telefono">Teléfono / WhatsApp:</label>
+                        <input type="tel" id="new-client-telefono" class="form-control" placeholder="0987654321" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="new-client-direccion">Dirección Domiciliaria (Quito):</label>
+                    <input type="text" id="new-client-direccion" class="form-control" placeholder="Av. Amazonas y Gaspar de Villarroel">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-navy" id="btn-cancel-client">Cancelar</button>
+                    <button type="submit" class="btn btn-peach">Guardar y Seleccionar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de Lógica Frontend Vanilla -->
+    <script src="js/app.js"></script>
+</body>
+</html>
+

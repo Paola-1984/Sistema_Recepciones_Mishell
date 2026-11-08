@@ -5,6 +5,7 @@
  */
 
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -16,11 +17,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Servir archivos estáticos de la interfaz web (Frontend)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
 // Verificación inicial de base de datos
 require('./src/config/db');
 
-// Ruta de bienvenida / Health check
+// Ruta principal: Entrega la interfaz web a navegadores o JSON a clientes REST / pruebas
 app.get('/', (req, res) => {
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+        return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
     res.json({
         ok: true,
         sistema: 'Sistema de Gestión - Recepciones Mishell',
@@ -29,7 +36,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// Importar rutas de módulos
+// Importar rutas de módulos API
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/clientes', require('./src/routes/clientes'));
 app.use('/api/servicios', require('./src/routes/servicios'));
@@ -44,10 +51,11 @@ app.use((req, res) => {
     });
 });
 
-// Iniciar servidor solo si no estamos en entorno de testing (Jest / Supertest)
-if (process.env.NODE_ENV !== 'test') {
+// Iniciar servidor solo si es ejecutado directamente como archivo principal (no en pruebas)
+if (require.main === module) {
     app.listen(PORT, () => {
         console.log(`🚀 Servidor ejecutándose en: http://localhost:${PORT}`);
+        console.log(`💻 Interfaz Web disponible en: http://localhost:${PORT}`);
         console.log(`📌 Módulo de Autenticación disponible en: http://localhost:${PORT}/api/auth`);
         console.log(`📌 Módulo de Clientes disponible en: http://localhost:${PORT}/api/clientes`);
         console.log(`📌 Módulo de Servicios disponible en: http://localhost:${PORT}/api/servicios`);

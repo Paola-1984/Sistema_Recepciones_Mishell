@@ -17,8 +17,8 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
    - Servidor HTTP configurado con middleware CORS para permitir consumo seguro de API.
    - Procesamiento de cargas JSON (`express.json()`) y codificación de formularios (`urlencoded`).
    - Enrutadores modulares montados en los prefijos `/api/auth`, `/api/clientes`, `/api/servicios`, `/api/cotizaciones` y `/api/reservas`.
+   - Servicio de archivos estáticos del frontend desde la carpeta `/public` con soporte dual para navegadores (HTML) y clientes REST / pruebas (JSON).
    - Manejador de rutas no encontradas (404) y verificación de estado en ruta raíz `/`.
-   - Exportación modular de la instancia `app` para pruebas con Supertest.
 
 3. **Base de Datos Relacional MySQL (`recepciones_mishell`):**
    - Script SQL completo disponible en `database/database.sql`.
@@ -32,53 +32,56 @@ El sistema cuenta con las siguientes capas y componentes implementados y 100% op
      - `reservas`: Eventos formalizados a partir de cotizaciones aprobadas, seguimiento de anticipos y saldos.
    - Semilla inicial con usuario administrador (`admin@recepcionesmishell.com` / `Admin123*`) y catálogo base de servicios.
 
-4. **Módulo de Usuarios y Autenticación Segura (REST API Operativo):**
-   - Arquitectura desacoplada **MVC** (`src/routes/auth.js` y `src/controllers/authController.js`).
-   - **Requisito No Funcional RNF04 (Seguridad):** Cifrado unidireccional de contraseñas mediante **Bcrypt** con factor de coste 10. Consultas SQL preparadas contra Inyección SQL.
-   - **Emisión de Tokens JWT:** Autenticación stateless basada en JSON Web Tokens (algoritmo HMAC-SHA256) con expiración de 8 horas.
-   - Prevención de duplicados por correo electrónico (`HTTP 409 Conflict`) y validación de usuario activo (`estado = 1`).
+4. **Módulo de Usuarios y Autenticación Segura (REST API):**
+   - Cifrado unidireccional de contraseñas mediante **Bcrypt** (cost factor 10).
+   - Tokens de acceso stateless **JWT** (RFC 7519) con expiración de 8 horas.
+   - Endpoint de inicio de sesión (`/api/auth/login`) y perfil autenticado (`/api/auth/perfil`).
 
-5. **Módulo de Clientes (REST API Operativo):**
-   - Arquitectura desacoplada **MVC** (`src/routes/clientes.js` y `src/controllers/clienteController.js`).
-   - Validaciones de negocio adaptadas a Ecuador: Cédula (10 dígitos), RUC (13 dígitos) y formato de correo electrónico.
-   - Prevención de duplicados para evitar colisiones de cédula/RUC y correo (`HTTP 409 Conflict`).
-   - **Baja lógica:** Estado inactivo (`estado = 0`) para proteger la integridad referencial histórica.
+5. **Módulo de Clientes (REST API):**
+   - Gestión de expedientes de clientes con validación ecuatoriana (Cédula 10 dígitos / RUC 13 dígitos).
+   - Control estricto de duplicidad (`HTTP 409`) y baja lógica (`estado = 0`).
 
-6. **Módulo de Servicios (REST API Operativo):**
-   - Arquitectura desacoplada **MVC** (`src/routes/servicios.js` y `src/controllers/servicioController.js`).
-   - Control de unicidad estricta para el código del servicio (`codigo`) en inserción y actualización (`HTTP 409 Conflict`).
-   - Soporte de filtrado por categoría y búsqueda por texto.
-   - **Baja lógica:** Marcado de descontinuado (`estado = 0`).
+6. **Módulo de Servicios (REST API):**
+   - Catálogo clasificado por categorías (`CATERING`, `DECORACION`, `LOCAL_SALON`, `SONIDO_LUCES`, etc.).
+   - Validación de código único y control de disponibilidad.
 
-7. **Módulo de Cotizaciones y Detalle (REST API Operativo):**
-   - Arquitectura desacoplada **MVC** (`src/routes/cotizaciones.js` y `src/controllers/cotizacionController.js`).
-   - **Transaccionalidad ACID:** Inserción atómica de cabecera (`cotizaciones`) y desglose (`detalle_cotizacion`) mediante transacciones SQL (`beginTransaction`, `commit`, `rollback`).
-   - **Cálculo Financiero Automatizado:** Subtotal acumulado de servicios, cálculo oficial de IVA al 15% (Ecuador SRI) y Total general.
-   - **Código Correlativo Único Diario:** Formato formal `COT-YYYYMMDD-XXX` generado bajo bloqueo transaccional (`FOR UPDATE`).
+7. **Módulo de Cotizaciones y Detalle (REST API):**
+   - Transaccionalidad ACID en inserción de cabecera y desglose de servicios.
+   - Cálculo automático del 15% de IVA según normativa oficial del SRI (Ecuador).
+   - Código correlativo único diario (`COT-YYYYMMDD-XXX`) bajo bloqueo transaccional.
 
-8. **Módulo de Reservas (REST API Operativo):**
-   - Arquitectura desacoplada **MVC** (`src/routes/reservas.js` y `src/controllers/reservaController.js`).
-   - **Formalización Atómica:** Creación de reservas exclusivamente a partir de cotizaciones en estado `APROBADA`.
-   - **Control Financiero:** Validación de anticipo entregado y cálculo automático del saldo pendiente.
-   - **Código Correlativo Único Diario:** Formato formal `RES-YYYYMMDD-XXX` con bloqueo `FOR UPDATE`.
+8. **Módulo de Reservas (REST API):**
+   - Formalización atómica a partir de cotizaciones aprobadas (relación 1:1).
+   - Validación de anticipos, saldos pendientes y código correlativo (`RES-YYYYMMDD-XXX`).
 
-9. **Fase 4: Aseguramiento de Calidad y Pruebas Automatizadas (QA):**
-   - Suite de pruebas de integración con **Jest** y **Supertest** (`tests/api.test.js`).
-   - Verificación de respuestas 200 en catálogos, rechazo seguro de login con datos vacíos (400/401) y captura controlada de rutas 404.
+9. **Frontend UI/UX Completo (Vanilla HTML5 / CSS3 / JavaScript):**
+   - Carpeta `public/` con arquitectura SPA modular y 7 vistas integradas:
+     - **Vista 1:** Login institucional con selector de perfiles (Admin / Dueño), acceso rápido de demo y pie de seguridad SSL.
+     - **Vista 2:** Calendario interactivo (Noviembre 2026) con estados visuales (azul, naranja, disponible), agenda de turnos y bloqueo de fechas.
+     - **Vista 3:** Tablero de Gestión & KPIs con tarjetas de facturación acumulada ($14,850.00 / +18.4%), gráfica semestral Real vs Meta, distribución porcentual y tarjeta de Oportunidad Estratégica.
+     - **Vista 4 (Paso 1 Cotizador):** Búsqueda de cliente (/api/clientes), tipo de recepción, control de aforo (ej. 85 pax) con sugerencia de distribución de mesas, fecha y turno.
+     - **Vista 5 (Paso 2 Cotizador):** Selección de mantelería, menús gastronómicos (3 tiempos, buffet, tradicional), switch de pastel temático ($2.50/pax) y barra flotante de subtotal.
+     - **Vista 6 (Paso 3 Cotizador):** Alquiler base del salón ($800 / 8h), duración de disco móvil (4h, 6h, 8h) con equipamiento incluido y desglose acumulado ($2,885.00).
+     - **Vista 7 (Paso 4 Cotizador):** Resumen de contratación, desglose de ítems, bloque fiscal SRI con liquidación del 15% de IVA ($432.75) para un Total Definitivo de $3,317.75, y botones de confirmación y reserva vinculados con la API.
 
----
-
-## 🛠️ Tecnologías del Backend
-* **Entorno de Ejecución:** Node.js (v18+)
-* **Framework Web:** Express.js
-* **Acceso a Datos:** MySQL2 (Soporte nativo de Promises, Transacciones ACID y Prepared Statements)
-* **Base de Datos:** MySQL / MariaDB (vía XAMPP)
-* **Seguridad:** Cifrado Bcrypt, Tokens JWT (RFC 7519) y consultas parametrizadas contra Inyección SQL (RNF04)
-* **Testing & QA:** Jest y Supertest
+10. **Aseguramiento de Calidad (Fase 4 - QA):**
+    - Suite de pruebas de integración con **Jest** y **Supertest** (`tests/api.test.js`).
 
 ---
 
-## 📂 Estructura de Archivos del Backend
+## 🎨 Lineamientos Visuales y Estilísticos (Frontend)
+
+* **Paleta Corporativa:**
+  - **Azul Marino:** `#1B365D` (Encabezados, barra de navegación, botones secundarios).
+  - **Durazno / Naranja Pastel:** `#FFA76E` (Botones de acción principal, destaques, llamadas a la acción).
+  - **Fondo Neutro:** `#F8FAFC` (Superficie limpia, descansada para la vista).
+* **Tipografía:** *Inter* (Google Fonts) para alta legibilidad en pantallas retina y móviles.
+* **Bordes y Contenedores:** Curvaturas pronunciadas (`border-radius: 16px` a `24px`) para una estética moderna y amigable.
+* **Maquetación:** 100% Flexbox y CSS Grid sin librerías pesadas externas.
+
+---
+
+## 📂 Estructura de Archivos del Proyecto
 
 ```text
 Sistema_Recepciones_Mishell/
@@ -86,7 +89,14 @@ Sistema_Recepciones_Mishell/
 ├── database/
 │   └── database.sql               # Script DDL/DML de creación de BD, tablas relacionales y admin inicial
 │
-├── src/
+├── public/                        # Frontend UI/UX (Cliente Web)
+│   ├── css/
+│   │   └── styles.css             # Estilos corporativos, componentes visuales y diseño responsivo
+│   ├── js/
+│   │   └── app.js                 # Lógica SPA, consumo de API fetch, calendario y motor del cotizador
+│   └── index.html                 # Estructura HTML5 de las 7 vistas y modales
+│
+├── src/                           # Backend API (Node.js + Express)
 │   ├── config/
 │   │   └── db.js                  # Pool de conexión a MySQL2 con soporte Promise
 │   ├── controllers/
@@ -109,52 +119,27 @@ Sistema_Recepciones_Mishell/
 ├── .env.example                   # Plantilla de configuración de variables de entorno
 ├── package.json                   # Dependencias y scripts de ejecución
 ├── README.md                      # Documentación completa del proyecto
-└── server.js                      # Punto de entrada principal del servidor Express (exporta app para tests)
+└── server.js                      # Servidor Express, servicio estático y arranque
 ```
 
 ---
 
-## 🧪 Pruebas Automatizadas (Fase 4 - QA)
+## 🚀 Puesta en Marcha y Visualización
 
-Para ejecutar la suite de pruebas unitarias y de integración:
+1. **Asegurar Base de Datos:**
+   - Inicia **Apache** y **MySQL** en el panel de control de **XAMPP**.
+   - Importa [`database/database.sql`](database/database.sql) en phpMyAdmin (`http://localhost/phpmyadmin/`).
 
-```bash
-npm test
-```
-
-### Casos de Prueba Verificados (`tests/api.test.js`):
-1. **GET `/api/servicios`**: Valida respuesta con código `HTTP 200`, estructura `{ ok: true, servicios: [...] }` y consistencia de atributos.
-2. **POST `/api/auth/login`**: Valida rechazo de solicitudes con cuerpo vacío o credenciales faltantes (`HTTP 400` / `401`).
-3. **Manejo de Rutas Inexistentes**: Valida captura de endpoints indefinidos retornando `HTTP 404` con mensaje controlado en JSON.
-4. **Health Check (`GET /`)**: Valida que la raíz del servidor confirme operatividad activa (`HTTP 200`).
-
----
-
-## ⚙️ Instalación y Puesta en Marcha Local
-
-1. **Base de Datos (XAMPP):**
-   - Inicia los módulos **Apache** y **MySQL** desde el panel de control de XAMPP.
-   - Accede a `http://localhost/phpmyadmin/`.
-   - Importa o ejecuta el script [`database/database.sql`](database/database.sql) para crear la base `recepciones_mishell` y las tablas relacionales.
-
-2. **Configuración de Variables de Entorno (`.env`):**
-   ```env
-   PORT=3000
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=
-   DB_NAME=recepciones_mishell
-   DB_PORT=3306
-   NODE_ENV=development
-   JWT_SECRET=RecepcionesMishell_SecretKey_2026_Quito
-   ```
-
-3. **Instalación de Dependencias:**
+2. **Instalar Dependencias (si aún no lo has hecho):**
    ```bash
    npm install
    ```
 
-4. **Ejecución del Servidor:**
-   - Modo producción: `npm start`
-   - Modo desarrollo: `npm run dev`
-   - Modo pruebas: `npm test`
+3. **Iniciar el Servidor Completo:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Abrir la Plataforma en el Navegador:**
+   - Abre tu navegador web en: **`http://localhost:3000`**
+   - Podrás interactuar con la pantalla de login, calendario, reportes KPIs y el cotizador inteligente en tiempo real.
