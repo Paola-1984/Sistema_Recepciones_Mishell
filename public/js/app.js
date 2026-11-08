@@ -426,6 +426,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.btn-view-ficha').forEach(b => {
             b.addEventListener('click', () => {
                 showToast('Abriendo ficha técnica de reserva en el sistema...', 'info');
+                const modalFicha = document.getElementById('modal-ficha');
+                if (modalFicha) {
+                    modalFicha.classList.remove('hidden');
+                }
             });
         });
 
@@ -721,4 +725,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function cargarClientesAPI() {
+        try {
+            const res = await fetch(`${API_BASE}/clientes`, {
+                headers: { 'Authorization': `Bearer ${state.token}` }
+            });
+            const data = await res.json();
+            if (data.ok) {
+                state.clientes = data.clientes || [];
+            }
+        } catch (err) {
+            console.log('Modo de respaldo local para clientes activado.');
+        }
+    }
+
+    // =========================================================================
+    // LÓGICA DE CONTROL DEL MODAL DE FICHA TÉCNICA
+    // =========================================================================
+    const modalFicha = document.getElementById('modal-ficha');
+    const btnCloseModal = document.getElementById('btn-close-modal-ficha');
+    const btnCerrarFichaModal = document.getElementById('btn-cerrar-ficha-modal');
+    const btnPrintFicha = document.getElementById('btn-print-ficha');
+
+    const cerrarModalFicha = () => {
+        if (modalFicha) {
+            modalFicha.classList.add('hidden');
+        }
+    };
+
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener('click', cerrarModalFicha);
+    }
+
+    if (btnCerrarFichaModal) {
+        btnCerrarFichaModal.addEventListener('click', cerrarModalFicha);
+    }
+
+    if (btnPrintFicha) {
+        btnPrintFicha.addEventListener('click', () => {
+            showToast('Generando formato de impresión...', 'success');
+            window.print();
+        });
+    }
+
+    if (modalFicha) {
+        modalFicha.addEventListener('click', (e) => {
+            if (e.target === modalFicha) {
+                cerrarModalFicha();
+            }
+        });
+    }
 });

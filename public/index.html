@@ -974,6 +974,53 @@
         </div>
     </div>
 
+    <!-- MODAL FICHA TÉCNICA DE RESERVA (RECEPCIONES MISHELL) -->
+<div id="modal-ficha" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>📋 Ficha Técnica de Reserva</h3>
+      <button type="button" id="btn-close-modal-ficha" class="btn-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="badge-status-confirmed">✓ Estado: Reserva Confirmada</div>
+      
+      <div class="ficha-grid">
+        <div class="ficha-item">
+          <label>Cliente Solicitante:</label>
+          <p>Carlos Mendoza & Diana Salazar</p>
+        </div>
+        <div class="ficha-item">
+          <label>Tipo de Evento:</label>
+          <p>Boda Gala Soñada</p>
+        </div>
+        <div class="ficha-item">
+          <label>Fecha & Turno:</label>
+          <p>21 de Noviembre de 2026 (Nocturno 18:00 - 02:00)</p>
+        </div>
+        <div class="ficha-item">
+          <label>Aforo Agendado:</label>
+          <p>150 Invitados (15 Mesas Redondas)</p>
+        </div>
+        <div class="ficha-item">
+          <label>Servicios Incluidos:</label>
+          <p>Banquete Gourmet 3 Tiempos, Mantelería Gala, DJ (6 hrs)</p>
+        </div>
+        <div class="ficha-item">
+          <label>Desglose Financiero (Base de Datos):</label>
+          <p>Subtotal: $2,885.00 | IVA (15% SRI): $432.75<br><strong>Total Cotizado: $3,317.75</strong></p>
+        </div>
+        <div class="ficha-item highlight">
+          <label>Registro de Anticipo:</label>
+          <p>Anticipo Pagado: $1,200.00 | <strong>Saldo Pendiente: $1,870.50</strong></p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="btn-print-ficha" class="btn btn-outline-navy">🖨️ Imprimir Ficha</button>
+      <button type="button" id="btn-cerrar-ficha-modal" class="btn btn-peach">Cerrar Ventana</button>
+    </div>
+  </div>
+</div>
     <!-- Script de Lógica Frontend Vanilla -->
     <script src="js/app.js"></script>
 </body>
