@@ -44,12 +44,17 @@ app.use((req, res) => {
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor ejecutándose en: http://localhost:${PORT}`);
-    console.log(`📌 Módulo de Autenticación disponible en: http://localhost:${PORT}/api/auth`);
-    console.log(`📌 Módulo de Clientes disponible en: http://localhost:${PORT}/api/clientes`);
-    console.log(`📌 Módulo de Servicios disponible en: http://localhost:${PORT}/api/servicios`);
-    console.log(`📌 Módulo de Cotizaciones disponible en: http://localhost:${PORT}/api/cotizaciones`);
-    console.log(`📌 Módulo de Reservas disponible en: http://localhost:${PORT}/api/reservas`);
-});
+// Iniciar servidor solo si no estamos en entorno de testing (Jest / Supertest)
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor ejecutándose en: http://localhost:${PORT}`);
+        console.log(`📌 Módulo de Autenticación disponible en: http://localhost:${PORT}/api/auth`);
+        console.log(`📌 Módulo de Clientes disponible en: http://localhost:${PORT}/api/clientes`);
+        console.log(`📌 Módulo de Servicios disponible en: http://localhost:${PORT}/api/servicios`);
+        console.log(`📌 Módulo de Cotizaciones disponible en: http://localhost:${PORT}/api/cotizaciones`);
+        console.log(`📌 Módulo de Reservas disponible en: http://localhost:${PORT}/api/reservas`);
+    });
+}
+
+// Exportar app para pruebas automatizadas con Supertest
+module.exports = app;
