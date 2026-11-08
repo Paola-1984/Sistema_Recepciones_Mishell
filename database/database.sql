@@ -176,13 +176,13 @@ CREATE TABLE `reservas` (
 
 -- Usuario Administrador Inicial
 -- Correo: admin@recepcionesmishell.com
--- Contraseña por defecto: password (hash bcrypt seguro con 10 rounds)
--- Hash: $2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+-- Contraseña por defecto: Admin123* (hash bcrypt seguro con 10 rounds)
+-- Hash: $2a$10$i0O5trRbY4aH/05N9iMNyOPzW9vfm35.7ZqlasfTY0eFA2I8gyfki
 INSERT INTO `usuarios` (`nombre_completo`, `correo`, `password`, `rol`, `telefono`, `estado`) 
 VALUES (
     'Administrador Recepciones Mishell',
     'admin@recepcionesmishell.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2a$10$i0O5trRbY4aH/05N9iMNyOPzW9vfm35.7ZqlasfTY0eFA2I8gyfki',
     'ADMIN',
     '0991234567',
     1
