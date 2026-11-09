@@ -775,4 +775,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // =========================================================================
+    // LÓGICA DE RESTABLECIMIENTO SEGURO DE CONTRASEÑA
+    // =========================================================================
+    const modalRecuperar = document.getElementById('modal-recuperar');
+    const linkOlvidoPass = document.getElementById('link-olvido-pass');
+    const btnCloseRecuperar = document.getElementById('btn-close-recuperar');
+    const btnCancelRec = document.getElementById('btn-cancel-rec');
+    const formRecuperar = document.getElementById('form-recuperar');
+
+    const abrirModalRecuperar = (e) => {
+        if (e) e.preventDefault();
+        if (modalRecuperar) modalRecuperar.classList.remove('hidden');
+    };
+
+    const cerrarModalRecuperar = () => {
+        if (modalRecuperar) modalRecuperar.classList.add('hidden');
+        if (formRecuperar) formRecuperar.reset();
+    };
+
+    if (linkOlvidoPass) linkOlvidoPass.addEventListener('click', abrirModalRecuperar);
+    if (btnCloseRecuperar) btnCloseRecuperar.addEventListener('click', cerrarModalRecuperar);
+    if (btnCancelRec) btnCancelRec.addEventListener('click', cerrarModalRecuperar);
+
+    if (formRecuperar) {
+        formRecuperar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const correo = document.getElementById('rec-correo').value;
+            const codigo_seguridad = document.getElementById('rec-codigo').value;
+            const nueva_password = document.getElementById('rec-password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/restablecer-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo, codigo_seguridad, nueva_password })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.ok) {
+                    showToast('¡Contraseña actualizada con éxito! Ya puedes iniciar sesión.', 'success');
+                    cerrarModalRecuperar();
+                } else {
+                    showToast(data.mensaje || 'Error al actualizar credenciales.', 'error');
+                }
+            } catch (error) {
+                console.error('Error de red:', error);
+                showToast('Error de conexión con el servidor backend.', 'error');
+            }
+        });
+    }
+
+    // Toggle para visibilidad de contraseña en el modal de recuperación
+    const inputRecCodigo = document.getElementById('rec-codigo');
+    const btnToggleRecCodigo = document.getElementById('btn-toggle-rec-codigo');
+    const inputRecPassword = document.getElementById('rec-password');
+    const btnToggleRecPassword = document.getElementById('btn-toggle-rec-password');
+
+    if (btnToggleRecCodigo && inputRecCodigo) {
+        btnToggleRecCodigo.addEventListener('click', () => {
+            const isPassword = inputRecCodigo.type === 'password';
+            inputRecCodigo.type = isPassword ? 'text' : 'password';
+            btnToggleRecCodigo.textContent = isPassword ? '🙈' : '👁️';
+        });
+    }
+
+    if (btnToggleRecPassword && inputRecPassword) {
+        btnToggleRecPassword.addEventListener('click', () => {
+            const isPassword = inputRecPassword.type === 'password';
+            inputRecPassword.type = isPassword ? 'text' : 'password';
+            btnToggleRecPassword.textContent = isPassword ? '🙈' : '👁️';
+        });
+    }
 });

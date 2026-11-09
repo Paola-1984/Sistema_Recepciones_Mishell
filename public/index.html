@@ -65,6 +65,9 @@
                             </button>
                         </div>
                     </div>
+                    <div style="text-align: right; margin-top: 6px; margin-bottom: 14px;">
+                      <a href="#" id="link-olvido-pass" style="font-size: 0.8rem; color: #3b82f6; text-decoration: none;">¿Olvidaste tu contraseña?</a>
+                    </div>
 
                     <!-- Botón Principal Tono Durazno/Pastel (#FFA76E) -->
                     <button type="submit" id="btn-submit-login" class="btn btn-peach btn-block btn-lg">
@@ -73,27 +76,23 @@
                     </button>
 
                     <!-- Acceso Rápido de Demostración -->
-                    <div class="demo-access-box">
-                        <p class="demo-hint">¿Estás en la presentación o prueba de titulación?</p>
-                        <button type="button" id="btn-quick-demo" class="btn btn-outline-navy btn-sm btn-block">
-                            ⚡ Autocompletar Credenciales de Demo (Admin Quito)
-                        </button>
-                    </div>
+                    <div class="modal-footer" style="margin-top: 16px; text-align: center; border-top: none;">
+                       <button type="button" id="btn-quick-demo" class="btn-text-only" style="background: none; border: none; color: #3b82f6; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+                         Autocompletar Credenciales de Demostración
+                       </button>
+                   </div> 
                 </form>
             </div>
 
-            <!-- Footer Institucional de Seguridad -->
-            <footer class="login-footer">
-                <div class="security-indicators">
-                    <span class="sec-badge">🔒 Cifrado SSL 256-bit</span>
-                    <span class="sec-dot">•</span>
-                    <span class="sec-badge">⚡ Servidor Local Quito (Node.js XAMPP)</span>
-                    <span class="sec-dot">•</span>
-                    <span class="sec-badge">v2.6.0</span>
-                </div>
-                <p class="legal-copy">© 2026 Salón de Eventos y Banquetes Recepciones Mishell. Todos los derechos reservados.</p>
-            </footer>
-        </div>
+      <!-- Footer Comercial de Acceso -->
+<div class="login-footer-section" style="text-align: center; margin-top: 15px; padding-top: 10px;">
+  <div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 6px;">
+    <span>🔒 Conexión Segura Encriptada • Plataforma de Gestión Administrativa</span>
+  </div>
+  <p style="font-size: 0.75rem; color: #64748b; margin: 0;">
+    © 2026 Salón de Eventos y Banquetes Recepciones Mishell. Quito, Ecuador. Todos los derechos reservados.
+  </p>
+</div>
     </section>
 
     <!-- =====================================================================
@@ -1018,6 +1017,44 @@
     <div class="modal-footer">
       <button type="button" id="btn-print-ficha" class="btn btn-outline-navy">🖨️ Imprimir Ficha</button>
       <button type="button" id="btn-cerrar-ficha-modal" class="btn btn-peach">Cerrar Ventana</button>
+    </div>
+  </div>
+</div>
+
+<<!-- MODAL DE RESTABLECIMIENTO SEGURO DE CREDENCIALES -->
+<div id="modal-recuperar" class="modal-overlay hidden">
+  <div class="modal-card" style="max-width: 450px;">
+    <div class="modal-header">
+      <h3>🔒 Restablecimiento de Credenciales</h3>
+      <button type="button" id="btn-close-recuperar" class="btn-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-recuperar">
+        <div class="ficha-grid">
+          <div class="ficha-item">
+            <label>Correo Electrónico:</label>
+            <input type="email" id="rec-correo" class="form-control" placeholder="admin@recepcionesmishell.com" required style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px;">
+          </div>
+          <div class="ficha-item">
+            <label>Clave de Autorización Administrativa:</label>
+            <div class="input-icon-wrapper" style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="rec-codigo" class="form-control" placeholder="Ingrese clave maestra asignada" required style="width: 100%; padding: 8px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px;">
+              <button type="button" id="btn-toggle-rec-codigo" class="btn-toggle-eye" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.1rem; top: 50%; transform: translateY(-35%);">👁️</button>
+            </div>
+          </div>
+          <div class="ficha-item highlight">
+            <label>Nueva Contraseña:</label>
+            <div class="input-icon-wrapper" style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="rec-password" class="form-control" placeholder="Mínimo 8 caracteres" required style="width: 100%; padding: 8px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px;">
+              <button type="button" id="btn-toggle-rec-password" class="btn-toggle-eye" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.1rem; top: 50%; transform: translateY(-35%);">👁️</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="margin-top: 16px;">
+          <button type="button" id="btn-cancel-rec" class="btn btn-outline-navy" style="padding: 6px 14px; border-radius: 6px; cursor: pointer;">Cancelar</button>
+          <button type="submit" class="btn btn-peach" style="padding: 6px 14px; background: #f97316; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Actualizar Contraseña</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

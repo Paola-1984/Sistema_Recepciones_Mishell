@@ -32,8 +32,6 @@ const ROLES_VALIDOS = ['ADMIN', 'ORGANIZADOR', 'RECEPCIONISTA'];
 
 /**
  * Generador estándar de tokens JWT
- * Si 'jsonwebtoken' no está instalado, utiliza el módulo nativo 'crypto'
- * garantizando compatibilidad 100% inmediata sin dependencias faltantes.
  */
 const generarJWT = (payload) => {
     if (jwtLib) {
@@ -63,8 +61,6 @@ const esCorreoValido = (correo) => {
 
 /**
  * 1. Registro de Usuario Seguro
- * POST /api/auth/register
- * Body esperado: { nombre_completo, correo, password, rol, telefono }
  */
 const register = async (req, res) => {
     try {
@@ -76,7 +72,6 @@ const register = async (req, res) => {
             telefono
         } = req.body;
 
-        // 1. Validaciones de presencia obligatoria
         if (!nombre_completo || !correo || !password) {
             return res.status(400).json({
                 ok: false,
@@ -89,7 +84,6 @@ const register = async (req, res) => {
         const telefonoLimpio = telefono ? telefono.trim() : null;
         const rolLimpio = rol ? rol.trim().toUpperCase() : 'RECEPCIONISTA';
 
-        // 2. Validación de formato de correo
         if (!esCorreoValido(correoLimpio)) {
             return res.status(400).json({
                 ok: false,
@@ -97,7 +91,6 @@ const register = async (req, res) => {
             });
         }
 
-        // 3. Validación de fortaleza mínima de contraseña
         if (password.length < 6) {
             return res.status(400).json({
                 ok: false,
@@ -105,7 +98,6 @@ const register = async (req, res) => {
             });
         }
 
-        // 4. Validación de rol permitido
         if (!ROLES_VALIDOS.includes(rolLimpio)) {
             return res.status(400).json({
                 ok: false,
@@ -113,7 +105,6 @@ const register = async (req, res) => {
             });
         }
 
-        // 5. Verificación de duplicados con consulta parametrizada (RNF04)
         const [usuarioExistente] = await pool.execute(
             'SELECT id_usuario, correo FROM usuarios WHERE correo = ? LIMIT 1',
             [correoLimpio]
@@ -126,11 +117,9 @@ const register = async (req, res) => {
             });
         }
 
-        // 6. Hasheo seguro de contraseña con Bcrypt (RNF04 - Cost factor 10)
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // 7. Inserción segura con consulta parametrizada
         const insertSql = `
             INSERT INTO usuarios (
                 nombre_completo,
@@ -174,14 +163,11 @@ const register = async (req, res) => {
 
 /**
  * 2. Inicio de Sesión Seguro (Login)
- * POST /api/auth/login
- * Body esperado: { correo, password }
  */
 const login = async (req, res) => {
     try {
         const { correo, password } = req.body;
 
-        // 1. Validar que se envíen correo y password
         if (!correo || !password) {
             return res.status(400).json({
                 ok: false,
@@ -191,7 +177,6 @@ const login = async (req, res) => {
 
         const correoLimpio = correo.trim().toLowerCase();
 
-        // 2. Consultar usuario mediante consulta preparada (RNF04 contra inyección SQL)
         const [rows] = await pool.execute(
             `SELECT 
                 id_usuario,
@@ -207,7 +192,6 @@ const login = async (req, res) => {
             [correoLimpio]
         );
 
-        // 3. Validar si el usuario existe
         if (rows.length === 0) {
             return res.status(401).json({
                 ok: false,
@@ -217,7 +201,6 @@ const login = async (req, res) => {
 
         const usuario = rows[0];
 
-        // 4. Validar que el usuario esté activo
         if (usuario.estado !== 1) {
             return res.status(403).json({
                 ok: false,
@@ -225,7 +208,6 @@ const login = async (req, res) => {
             });
         }
 
-        // 5. Comparar la contraseña ingresada con el hash bcrypt almacenado
         const passwordValida = await bcrypt.compare(password, usuario.password);
 
         if (!passwordValida) {
@@ -235,7 +217,6 @@ const login = async (req, res) => {
             });
         }
 
-        // 6. Generar Token JWT de acceso
         const payloadToken = {
             id_usuario: usuario.id_usuario,
             nombre_completo: usuario.nombre_completo,
@@ -245,7 +226,6 @@ const login = async (req, res) => {
 
         const token = generarJWT(payloadToken);
 
-        // 7. Retornar respuesta exitosa sin exponer el hash de la contraseña
         return res.status(200).json({
             ok: true,
             mensaje: `Bienvenido/a al Sistema Recepciones Mishell, ${usuario.nombre_completo}`,
@@ -270,8 +250,6 @@ const login = async (req, res) => {
 
 /**
  * 3. Consultar Perfil / Verificar Sesión Actual
- * GET /api/auth/perfil
- * Lee el token del header Authorization: Bearer <token>
  */
 const perfil = async (req, res) => {
     try {
@@ -285,7 +263,6 @@ const perfil = async (req, res) => {
 
         const token = authHeader.split(' ')[1];
 
-        // Decodificación y verificación del token
         let decoded = null;
         if (jwtLib) {
             try {
@@ -294,7 +271,6 @@ const perfil = async (req, res) => {
                 return res.status(401).json({ ok: false, mensaje: 'Token inválido o expirado' });
             }
         } else {
-            // Verificación nativa con HMAC
             const parts = token.split('.');
             if (parts.length !== 3) {
                 return res.status(401).json({ ok: false, mensaje: 'Token con estructura no válida' });
@@ -315,7 +291,6 @@ const perfil = async (req, res) => {
             decoded = body;
         }
 
-        // Consultar datos actualizados en base de datos
         const [rows] = await pool.execute(
             'SELECT id_usuario, nombre_completo, correo, rol, telefono, estado, created_at FROM usuarios WHERE id_usuario = ? AND estado = 1 LIMIT 1',
             [decoded.id_usuario]
@@ -339,9 +314,85 @@ const perfil = async (req, res) => {
     }
 };
 
+/**
+ * 4. Restablecimiento Seguro de Contraseña con Clave Maestra (Sin SMTP)
+ * POST /api/auth/restablecer-password
+ */
+const restablecerPassword = async (req, res) => {
+    try {
+        const { correo, codigo_seguridad, nueva_password } = req.body;
+
+        if (!correo || !codigo_seguridad || !nueva_password) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'Todos los campos son obligatorios: correo, código de seguridad y nueva contraseña'
+            });
+        }
+
+        const correoLimpio = correo.trim().toLowerCase();
+        const CLAVE_MAESTRA_SISTEMA = process.env.MASTER_RECOVERY_KEY || 'Mishell2026*MasterKey';
+
+        if (codigo_seguridad !== CLAVE_MAESTRA_SISTEMA) {
+            return res.status(401).json({
+                ok: false,
+                mensaje: 'Clave de autorización administrativa incorrecta'
+            });
+        }
+
+        if (nueva_password.length < 8) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: 'La nueva contraseña debe tener un mínimo de 8 caracteres'
+            });
+        }
+
+        const [rows] = await pool.execute(
+            'SELECT id_usuario, correo, estado FROM usuarios WHERE correo = ? LIMIT 1',
+            [correoLimpio]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                mensaje: `El correo "${correoLimpio}" no se encuentra registrado en el sistema`
+            });
+        }
+
+        const usuario = rows[0];
+
+        if (usuario.estado !== 1) {
+            return res.status(403).json({
+                ok: false,
+                mensaje: 'No se puede restablecer la contraseña de un usuario inactivo'
+            });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(nueva_password, salt);
+
+        await pool.execute(
+            'UPDATE usuarios SET password = ? WHERE id_usuario = ?',
+            [passwordHash, usuario.id_usuario]
+        );
+
+        return res.status(200).json({
+            ok: true,
+            mensaje: '¡Contraseña actualizada con éxito! Ya puedes iniciar sesión.'
+        });
+
+    } catch (error) {
+        console.error('Error en restablecerPassword:', error);
+        return res.status(500).json({
+            ok: false,
+            mensaje: 'Error interno del servidor al restablecer la contraseña',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
-    perfil
+    perfil,
+    restablecerPassword
 };
-
