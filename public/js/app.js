@@ -725,17 +725,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ==========================================
+    // CARGAR Y RENDERIZAR CLIENTES EN EL SELECT
+    // ==========================================
     async function cargarClientesAPI() {
         try {
             const res = await fetch(`${API_BASE}/clientes`, {
                 headers: { 'Authorization': `Bearer ${state.token}` }
             });
             const data = await res.json();
+            
             if (data.ok) {
                 state.clientes = data.clientes || [];
+                
+                // Buscar el select en tu HTML y pintarlos
+                const selectClientes = document.getElementById('cot-cliente-select');
+                if (selectClientes) {
+                    selectClientes.innerHTML = '<option value="">-- Seleccione un cliente existente --</option>';
+                    
+                    state.clientes.forEach(cliente => {
+                        selectClientes.innerHTML += `
+                            <option value="${cliente.id_cliente}">
+                                ${cliente.nombres} ${cliente.apellidos} - C.I./RUC: ${cliente.identificacion}
+                            </option>
+                        `;
+                    });
+                    console.log("¡Clientes renderizados en el select correctamente!");
+                }
             }
         } catch (err) {
-            console.log('Modo de respaldo local para clientes activado.');
+            console.log('Modo de respaldo local para clientes activado.', err);
         }
     }
 
@@ -846,6 +865,93 @@ document.addEventListener('DOMContentLoaded', () => {
             const isPassword = inputRecPassword.type === 'password';
             inputRecPassword.type = isPassword ? 'text' : 'password';
             btnToggleRecPassword.textContent = isPassword ? '🙈' : '👁️';
+        });
+    }
+
+    // 1. Elementos del DOM basados en tus IDs exactos del HTML
+    const modalCliente = document.getElementById('modal-nuevo-cliente');
+    const btnAbrirModal = document.getElementById('btn-quick-new-client'); // ID real de tu botón HTML
+    const btnCerrarModal = document.getElementById('btn-close-client-modal');
+    const btnCancelarModal = document.getElementById('btn-cancel-client');
+    const formNuevoCliente = document.getElementById('form-nuevo-cliente');
+
+    // Función para abrir el modal (removiendo la clase 'hidden')
+    const abrirModal = (e) => {
+        if (e) e.preventDefault();
+        if (modalCliente) {
+            modalCliente.classList.remove('hidden');
+        }
+    };
+
+    // Función para cerrar el modal (agregando la clase 'hidden')
+    const cerrarModal = (e) => {
+        if (e) e.preventDefault();
+        if (modalCliente) {
+            modalCliente.classList.add('hidden');
+        }
+        if (formNuevoCliente) {
+            formNuevoCliente.reset();
+        }
+    };
+
+    // Vincular el botón principal "+ Registrar Nuevo Cliente"
+    if (btnAbrirModal) {
+        btnAbrirModal.addEventListener('click', abrirModal);
+    }
+
+    // Botones de cierre ("X" y "Cancelar")
+    if (btnCerrarModal) btnCerrarModal.addEventListener('click', cerrarModal);
+    if (btnCancelarModal) btnCancelarModal.addEventListener('click', cerrarModal);
+
+    // 2. Envío del formulario por POST al Backend
+    if (formNuevoCliente) {
+        formNuevoCliente.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const clienteData = {
+                tipo_documento: document.getElementById('new-client-tipo').value,
+                identificacion: document.getElementById('new-client-id').value.trim(),
+                nombres: document.getElementById('new-client-nombres').value.trim(),
+                apellidos: document.getElementById('new-client-apellidos').value.trim(),
+                correo: document.getElementById('new-client-correo').value.trim(),
+                telefono: document.getElementById('new-client-telefono').value.trim(),
+                direccion: document.getElementById('new-client-direccion').value.trim(),
+                ciudad: 'Quito'
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/clientes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(clienteData)
+                });
+
+                const resultado = await response.json();
+
+                if (response.ok && resultado.ok) {
+                    alert(resultado.mensaje || '¡Cliente registrado con éxito!');
+                    cerrarModal();
+
+                    // Recargar la lista de clientes y auto-seleccionar al nuevo
+                    if (typeof cargarClientes === 'function') {
+                        await cargarClientes();
+                        const selectClientes = document.getElementById('cot-cliente-select'); // ID real de tu selector
+                        if (selectClientes && resultado.id_cliente) {
+                            selectClientes.value = resultado.id_cliente;
+                            selectClientes.dispatchEvent(new Event('change'));
+                        }
+                    }
+                } else {
+                    alert('Aviso: ' + (resultado.mensaje || 'No se pudo completar el registro'));
+                }
+            } catch (error) {
+                console.error('Error al registrar cliente:', error);
+                alert('Error de conexión con el servidor backend.');
+            }
         });
     }
 });
